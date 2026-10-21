@@ -863,7 +863,12 @@
   // =========================================================
   //  ART — flat illustrated style with soft light and depth
   // =========================================================
-  const fontFor = () => (isRTL() ? '"Cairo", "Segoe UI", Tahoma, sans-serif' : 'Inter, "Segoe UI", sans-serif');
+  // Arabic-script languages get the Cairo font; others use Inter, and the
+  // browser fills in system fonts for scripts Inter doesn't cover (Hindi, Chinese…)
+  const ARABIC_SCRIPT = ['ar', 'fa', 'ur'];
+  const fontFor = () => (ARABIC_SCRIPT.includes(window.I18N.lang)
+    ? '"Cairo", "Segoe UI", Tahoma, sans-serif'
+    : 'Inter, "Segoe UI", "Noto Sans", system-ui, sans-serif');
 
   function rr(x, y, w, h, r) {
     ctx.beginPath();
@@ -885,13 +890,15 @@
     stops.forEach(([o, c]) => g.addColorStop(o, c));
     return g;
   }
-  function label(text, x, y, color, size = 9, weight = 600, align = 'center') {
+  // maxWidth squeezes long words (e.g. German) so they fit on signs
+  function label(text, x, y, color, size = 9, weight = 600, align = 'center', maxWidth) {
     ctx.font = `${weight} ${size}px ${fontFor()}`;
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = color;
     if (!isRTL()) {
       ctx.textAlign = align;
-      ctx.fillText(text, x, y);
+      if (maxWidth) ctx.fillText(text, x, y, maxWidth);
+      else ctx.fillText(text, x, y);
       return;
     }
     // The world is drawn mirrored in Arabic, so flip each word back to read normally.
@@ -900,7 +907,8 @@
     ctx.translate(x, y);
     ctx.scale(-1, 1);
     ctx.textAlign = align === 'left' ? 'right' : align === 'right' ? 'left' : align;
-    ctx.fillText(text, 0, 0);
+    if (maxWidth) ctx.fillText(text, 0, 0, maxWidth);
+    else ctx.fillText(text, 0, 0);
     ctx.restore();
   }
 
@@ -1570,8 +1578,8 @@
     ctx.fill();
     ctx.fillStyle = '#b8312a';
     ctx.fillRect(sx, gy - 82, 60, 11);
-    label(tr('cSign1'), sx + 30, gy - 73.5, '#fff', 7.5, 700);
-    label(tr('cSign2'), sx + 30, gy - 61, '#2a2622', 9, 700);
+    label(tr('cSign1'), sx + 30, gy - 73.5, '#fff', 7.5, 700, 'center', 54);
+    label(tr('cSign2'), sx + 30, gy - 61, '#2a2622', 9, 700, 'center', 54);
     ctx.fillStyle = 'rgba(140, 80, 40, 0.3)';
     ellipse(sx + 52, gy - 56, 4, 2);
     ctx.fill();
@@ -2025,8 +2033,8 @@
     ctx.fill();
     if (open) {
       const urgent = T.time < 10;
-      label(tr('cCases', { a: T.load, b: T.target }), cx - pillW / 2 + 10, pillY + 13, '#ece8e1', 10, 600, 'left');
-      label(tr('cSecs', { n: Math.ceil(T.time) }), cx + pillW / 2 - 10, pillY + 13, urgent ? '#e2574c' : '#ffc907', 10, 700, 'right');
+      label(tr('cCases', { a: T.load, b: T.target }), cx - pillW / 2 + 10, pillY + 13, '#ece8e1', 10, 600, 'left', pillW * 0.6);
+      label(tr('cSecs', { n: Math.ceil(T.time) }), cx + pillW / 2 - 10, pillY + 13, urgent ? '#e2574c' : '#ffc907', 10, 700, 'right', pillW * 0.28);
       ctx.fillStyle = 'rgba(255,255,255,0.12)';
       ctx.fillRect(cx - pillW / 2 + 10, pillY + 18, pillW - 20, 2);
       ctx.fillStyle = urgent ? '#e2574c' : '#5bb6f0';
@@ -2034,7 +2042,7 @@
       if (nearTruck() && S.stack.length) prompt(cx, boxTop + 34, tr('pLoad'));
     } else {
       label(tr(T.full ? 'cOnWay' : (T.arriving ? 'cPulling' : 'cLeaving')),
-        cx, pillY + 17, T.full ? '#9fd39a' : '#ece8e1', 10, 600);
+        cx, pillY + 17, T.full ? '#9fd39a' : '#ece8e1', 10, 600, 'center', pillW - 12);
     }
   }
 
@@ -2209,6 +2217,15 @@
 
   // ---------- Language ----------
   const langSelect = $('langSelect');
+  // Fill the menu from the language list in i18n.js
+  window.I18N.languages.forEach(({ code, name }) => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.lang = code;
+    opt.dir = window.I18N.directionOf(code);
+    opt.textContent = name;
+    langSelect.appendChild(opt);
+  });
   langSelect.value = window.I18N.lang;
   langSelect.addEventListener('change', () => window.I18N.setLang(langSelect.value));
   window.I18N.onChange(() => {
@@ -2224,7 +2241,7 @@
       $('endFact').textContent = tr('facts')[S.factIndex || 0];
     }
   });
-  window.I18N.applyPage();
+  window.I18N.init();
 
   // ---------- Boot ----------
   window.addEventListener('resize', resize);

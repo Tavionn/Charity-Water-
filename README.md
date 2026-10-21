@@ -38,14 +38,21 @@ Open `index.html` in any web browser. No installs or build steps are needed.
 
 ## Languages
 
-Use the globe menu in the header to switch between **English** and **العربية (Arabic)**. Arabic reads right to left, so choosing it:
+Use the globe menu in the header to pick one of 18 languages:
 
-- translates every menu, message, and label (including the ones drawn in the game scene)
-- sets `dir="rtl"` on the page so the header, panels, and progress steps mirror
-- mirrors the game world, so the village and warehouse start on the right, while the arrow keys still move you the way they point
-- remembers your choice for next time
+English · Español · Français · Português · Deutsch · Italiano · Kiswahili · Türkçe · Bahasa Indonesia · Русский · हिन्दी · 中文 · 日本語 · 한국어 · **العربية · עברית · فارسی · اردو**
 
-All translations live in `i18n.js`.
+The game adapts to how each language is read:
+
+- **Direction is automatic.** The browser reports each language's reading direction (with a built-in backup list), so right-to-left languages (Arabic, Hebrew, Persian, Urdu) set `dir="rtl"` and mirror the header, panels, progress steps, and the game world, while every other language stays left to right. The arrow keys always move you the way they point.
+- **Everything is translated**, including the signs and labels drawn inside the game scene.
+- **First visit:** the game uses your browser's language if it's in the list. After that it remembers your choice.
+
+English is built into `i18n.js`. Each other language is one file in `lang/` (for example `lang/es.js`) that loads only when it's picked.
+
+**Adding a language:** copy `lang/es.js` to `lang/<code>.js`, translate the text on the right (keep every `{placeholder}` and `<b>`/`<kbd>` tag), and add one line to `LANGUAGES` in `i18n.js`. Its reading direction is detected automatically.
+
+The translations were written with AI help. Ideally a native speaker should review each one before the game is used publicly.
 
 ## Extra credit (LevelUp)
 
@@ -58,6 +65,7 @@ All translations live in `i18n.js`.
 - `index.html`: page layout (header, game area, control panels, menus)
 - `style.css`: styling and the responsive layout for desktop and mobile
 - `script.js`: game logic and canvas drawing
-- `i18n.js`: English and Arabic text, plus the language switching
+- `i18n.js`: language list, English text, reading-direction detection, and language switching
+- `lang/*.js`: one translation file per language
 
 Learn more about clean water at [charitywater.org](https://www.charitywater.org).

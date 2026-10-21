@@ -548,20 +548,18 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
 }
 
 /* ===== Arabic / right-to-left ===== */
-html[lang="ar"] body,
-html[lang="ar"] button,
-html[lang="ar"] select { font-family: "Cairo", "Segoe UI", Tahoma, sans-serif; }
-html[lang="ar"] { --head: "Cairo", "Segoe UI", Tahoma, sans-serif; }
-/* Arabic letters join together, so no extra letter spacing or forced capitals */
-html[lang="ar"] .stat .k,
-html[lang="ar"] .bar-label,
-html[lang="ar"] .panel h2,
-html[lang="ar"] .herd-head,
-html[lang="ar"] .caption,
-html[lang="ar"] .eyebrow,
-html[lang="ar"] .end-stats span { letter-spacing: 0; text-transform: none; }
-html[lang="ar"] .card h2,
-html[lang="ar"] .brand h1 { letter-spacing: 0; }
+/* Fonts for other scripts come from the system (Segoe UI, Noto, etc.) */
+html:not([lang="en"]) body { font-family: "Inter", "Segoe UI", "Noto Sans", system-ui, sans-serif; }
+html:not([lang="en"]) { --head: "Outfit", "Segoe UI", "Noto Sans", system-ui, sans-serif; }
+/* Arabic, Persian and Urdu share the Arabic script and the Cairo font */
+:is(html[lang="ar"], html[lang="fa"], html[lang="ur"]) :is(body, button, select) { font-family: "Cairo", "Segoe UI", Tahoma, sans-serif; }
+:is(html[lang="ar"], html[lang="fa"], html[lang="ur"]) { --head: "Cairo", "Segoe UI", Tahoma, sans-serif; }
+/* Joined scripts (Arabic) and scripts without capitals look wrong with
+   extra letter spacing, so only English-style labels keep it */
+html:not([lang="en"]) :is(.stat .k, .bar-label, .panel h2, .herd-head, .caption, .eyebrow, .end-stats span, .card h2, .brand h1) { letter-spacing: 0; }
+:is(html[lang="ar"], html[lang="fa"], html[lang="ur"], html[lang="he"]) :is(.stat .k, .bar-label, .panel h2, .herd-head, .caption, .eyebrow, .end-stats span) { text-transform: none; }
+/* Long translations wrap instead of overflowing */
+.bar-label > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Arrow buttons keep their real-world directions in either language */
 .dpad, .touchbar { direction: ltr; }
 /* Keys and numbers read left to right even inside Arabic sentences */
