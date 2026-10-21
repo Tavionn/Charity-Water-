@@ -6,7 +6,7 @@
   <title>Flow Quest | charity: water Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-mode="village">
@@ -24,7 +24,7 @@
     <header class="topbar">
       <div class="brand">
         <h1>Flow Quest</h1>
-        <p class="tagline">Water for a Brighter Tomorrow</p>
+        <p class="tagline" data-i18n="tagline">Water for a Brighter Tomorrow</p>
       </div>
 
       <a class="charity" href="https://www.charitywater.org" target="_blank" rel="noopener">
@@ -32,12 +32,21 @@
         <span>charity: water</span>
       </a>
 
-      <button class="reset-btn" id="resetBtn" aria-label="Reset game" title="Restart this game from the beginning">
+      <label class="lang">
+        <span class="sr-only" data-i18n="language">Language</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        <select id="langSelect">
+          <option value="en">English</option>
+          <option value="ar" lang="ar">العربية</option>
+        </select>
+      </label>
+
+      <button class="reset-btn" id="resetBtn" aria-label="Reset game" title="Restart this game from the beginning" data-i18n-aria="resetAria" data-i18n-title="resetTitle">
         <svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 3.5v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Reset</span>
+        <span data-i18n="reset">Reset</span>
       </button>
 
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" data-i18n-aria="menuAria">
         <span></span><span></span><span></span>
       </button>
 
@@ -49,52 +58,52 @@
             <span class="bar-label"><span id="barLabel">Water</span> <b id="waterText">20/100</b></span>
           </div>
         </div>
-        <div class="stat score"><span class="k">Score</span> <b id="score">0</b></div>
-        <div class="stat level-mini"><span class="k">Lv</span> <b id="levelTop">1</b></div>
+        <div class="stat score"><span class="k" data-i18n="score">Score</span> <b id="score">0</b></div>
+        <div class="stat level-mini"><span class="k" data-i18n="lv">Lv</span> <b id="levelTop">1</b></div>
         <div class="stat herd-mini"><svg class="stat-icon sm" id="herdIcon"><use href="#i-goat"/></svg> <b id="livestockTop">5</b></div>
-        <div class="stat hearts" id="hearts" aria-label="Lives"></div>
+        <div class="stat hearts" id="hearts" aria-label="Lives" data-i18n-aria="lives"></div>
       </div>
     </header>
 
     <!-- ===== GAME STAGE ===== -->
     <main class="stage" id="stage">
-      <canvas id="game" aria-label="Flow Quest game area"></canvas>
+      <canvas id="game" aria-label="Flow Quest game area" data-i18n-aria="gameArea"></canvas>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
       <!-- Role select -->
       <div class="overlay show" id="startOverlay">
         <div class="card wide">
-          <p class="eyebrow">A charity: water story</p>
+          <p class="eyebrow" data-i18n="eyebrow">A charity: water story</p>
           <h2 class="title">Flow Quest</h2>
-          <p class="lead">Two sides of one mission: getting clean water to the people who need it. Choose your role.</p>
+          <p class="lead" data-i18n="lead">Two sides of one mission: getting clean water to the people who need it. Choose your role.</p>
           <div class="roles">
             <button class="role village" data-mode="village">
               <span class="role-top">
                 <svg class="role-ico"><use href="#i-can"/></svg>
                 <span>
-                  <span class="role-name">Villager</span>
-                  <span class="role-sub">Living without clean water nearby</span>
+                  <span class="role-name" data-i18n="villager">Villager</span>
+                  <span class="role-sub" data-i18n="villagerSub">Living without clean water nearby</span>
                 </span>
               </span>
-              <span class="role-desc">Your village is running dry. Catch the rain, avoid polluted water, and purify every drop you carry home.</span>
-              <span class="role-tags"><span>Catch rain</span><span>Purify</span><span>Avoid the guard</span></span>
-              <span class="btn primary">Play as Villager</span>
+              <span class="role-desc" data-i18n="villagerDesc">Your village is running dry. Catch the rain, avoid polluted water, and purify every drop you carry home.</span>
+              <span class="role-tags"><span data-i18n="tagCatch">Catch rain</span><span data-i18n="tagPurify">Purify</span><span data-i18n="tagGuard">Avoid the guard</span></span>
+              <span class="btn primary" data-i18n="playVillager">Play as Villager</span>
             </button>
             <button class="role warehouse" data-mode="warehouse">
               <span class="role-top">
                 <svg class="role-ico"><use href="#i-truck"/></svg>
                 <span>
-                  <span class="role-name">Warehouse Volunteer</span>
-                  <span class="role-sub">Packing water for delivery</span>
+                  <span class="role-name" data-i18n="volunteer">Warehouse Volunteer</span>
+                  <span class="role-sub" data-i18n="volunteerSub">Packing water for delivery</span>
                 </span>
               </span>
-              <span class="role-desc">Load cases of clean water onto the truck before it leaves for the villages. Don't let a leaking case get on board.</span>
-              <span class="role-tags"><span>Beat the timer</span><span>Inspect cases</span><span>Dodge the forklift</span></span>
-              <span class="btn primary">Play as Volunteer</span>
+              <span class="role-desc" data-i18n="volunteerDesc">Load cases of clean water onto the truck before it leaves for the villages. Don't let a leaking case get on board.</span>
+              <span class="role-tags"><span data-i18n="tagTimer">Beat the timer</span><span data-i18n="tagInspect">Inspect cases</span><span data-i18n="tagForklift">Dodge the forklift</span></span>
+              <span class="btn primary" data-i18n="playVolunteer">Play as Volunteer</span>
             </button>
           </div>
-          <p class="keys keys-desktop">Move <kbd>←</kbd><kbd>→</kbd> or <kbd>A</kbd><kbd>D</kbd> · Jump <kbd>↑</kbd> or <kbd>Space</kbd> · Interact <kbd>E</kbd> · Pause <kbd>P</kbd></p>
-          <p class="keys keys-touch">Use the buttons below: ← → to move, ↑ to jump, and the hand to interact.</p>
+          <p class="keys keys-desktop" data-i18n-html="keysDesktop">Move <kbd>←</kbd><kbd>→</kbd> or <kbd>A</kbd><kbd>D</kbd> · Jump <kbd>↑</kbd> or <kbd>Space</kbd> · Interact <kbd>E</kbd> · Pause <kbd>P</kbd></p>
+          <p class="keys keys-touch" data-i18n="keysTouch">Use the buttons below: ← → to move, ↑ to jump, and the hand to interact.</p>
         </div>
       </div>
 
@@ -103,35 +112,35 @@
         <div class="card">
           <h2 id="helpTitle">How to Play</h2>
           <ul class="howto" data-mode="village">
-            <li><span class="ico drop-clean"></span><span><b>Catch clean drops</b> to fill your jerry can (10 max).</span></li>
-            <li><span class="ico drop-dirty"></span><span><b>Avoid polluted drops.</b> They cost a heart and <b>20 points</b>.</span></li>
-            <li><span class="ico station"></span><span><b>Use the biosand filter</b> on the bridge to turn your can into clean water.</span></li>
-            <li><span class="ico trash"></span><span><b>Pick up litter</b> for a cleanup bonus.</span></li>
-            <li><span class="ico sign"></span><span><b>Stay out of the Restricted Area.</b> The guard sends you back and you lose <b>25 points</b>.</span></li>
-            <li><span class="ico star"></span><span>Fill the village tank to <b>100</b> to level up. Clear level 5 to win.</span></li>
+            <li><span class="ico drop-clean"></span><span data-i18n-html="hv1"><b>Catch clean drops</b> to fill your jerry can (10 max).</span></li>
+            <li><span class="ico drop-dirty"></span><span data-i18n-html="hv2"><b>Avoid polluted drops.</b> They cost a heart and <b>20 points</b>.</span></li>
+            <li><span class="ico station"></span><span data-i18n-html="hv3"><b>Use the biosand filter</b> on the bridge to turn your can into clean water.</span></li>
+            <li><span class="ico trash"></span><span data-i18n-html="hv4"><b>Pick up litter</b> for a cleanup bonus.</span></li>
+            <li><span class="ico sign"></span><span data-i18n-html="hv5"><b>Stay out of the Restricted Area.</b> The guard sends you back and you lose <b>25 points</b>.</span></li>
+            <li><span class="ico star"></span><span data-i18n-html="hv6">Fill the village tank to <b>100</b> to level up. Clear level 5 to win.</span></li>
           </ul>
           <ul class="howto" data-mode="warehouse">
-            <li><span class="ico crate"></span><span><b>Grab cases</b> at the end of the conveyor belt (carry up to 3).</span></li>
-            <li><span class="ico truck"></span><span><b>Load the truck</b> before its timer runs out.</span></li>
-            <li><span class="ico crate bad"></span><span><b>Leaking cases</b> go in the <b>recycling bin</b>. Loading one costs <b>30 points</b>.</span></li>
-            <li><span class="ico lift"></span><span><b>Jump over the forklift.</b> A hit costs <b>25 points</b> and drops your cases.</span></li>
-            <li><span class="ico spill"></span><span><b>Spills slow you down.</b> Interact to mop them up for a bonus.</span></li>
-            <li><span class="ico star"></span><span>Each full truck heads to the villages. Send <b>5 trucks</b> to win.</span></li>
+            <li><span class="ico crate"></span><span data-i18n-html="hw1"><b>Grab cases</b> at the end of the conveyor belt (carry up to 3).</span></li>
+            <li><span class="ico truck"></span><span data-i18n-html="hw2"><b>Load the truck</b> before its timer runs out.</span></li>
+            <li><span class="ico crate bad"></span><span data-i18n-html="hw3"><b>Leaking cases</b> go in the <b>recycling bin</b>. Loading one costs <b>30 points</b>.</span></li>
+            <li><span class="ico lift"></span><span data-i18n-html="hw4"><b>Jump over the forklift.</b> A hit costs <b>25 points</b> and drops your cases.</span></li>
+            <li><span class="ico spill"></span><span data-i18n-html="hw5"><b>Spills slow you down.</b> Interact to mop them up for a bonus.</span></li>
+            <li><span class="ico star"></span><span data-i18n-html="hw6">Each full truck heads to the villages. Send <b>5 trucks</b> to win.</span></li>
           </ul>
-          <button class="btn primary" id="helpCloseBtn">Got it</button>
+          <button class="btn primary" id="helpCloseBtn" data-i18n="gotIt">Got it</button>
         </div>
       </div>
 
       <!-- Menu / Pause -->
       <div class="overlay" id="menuOverlay">
         <div class="card narrow">
-          <h2>Paused</h2>
+          <h2 data-i18n="paused">Paused</h2>
           <div class="menu-list">
-            <button class="btn primary" id="resumeBtn">Resume</button>
-            <button class="btn" id="helpBtn">How to Play</button>
-            <button class="btn" id="restartBtn">Restart</button>
-            <button class="btn" id="switchBtn">Switch Role</button>
-            <a class="btn ghost" href="https://www.charitywater.org" target="_blank" rel="noopener">Learn about charity: water</a>
+            <button class="btn primary" id="resumeBtn" data-i18n="resume">Resume</button>
+            <button class="btn" id="helpBtn" data-i18n="howTo">How to Play</button>
+            <button class="btn" id="restartBtn" data-i18n="restart">Restart</button>
+            <button class="btn" id="switchBtn" data-i18n="switchRole">Switch Role</button>
+            <a class="btn ghost" href="https://www.charitywater.org" target="_blank" rel="noopener" data-i18n="learnMore">Learn about charity: water</a>
           </div>
         </div>
       </div>
@@ -142,14 +151,14 @@
           <h2 id="endTitle">Game Over</h2>
           <p class="lead" id="endText"></p>
           <div class="end-stats">
-            <div><span>Score</span><b id="endScore">0</b></div>
-            <div><span>Level</span><b id="endLevel">1</b></div>
+            <div><span data-i18n="score">Score</span><b id="endScore">0</b></div>
+            <div><span data-i18n="level">Level</span><b id="endLevel">1</b></div>
             <div><span id="endHerdLabel">Livestock</span><b id="endHerd">5</b></div>
           </div>
           <p class="fact" id="endFact"></p>
           <div class="end-actions">
-            <button class="btn primary" id="againBtn">Play Again</button>
-            <button class="btn" id="endSwitchBtn">Switch Role</button>
+            <button class="btn primary" id="againBtn" data-i18n="playAgain">Play Again</button>
+            <button class="btn" id="endSwitchBtn" data-i18n="switchRole">Switch Role</button>
           </div>
         </div>
       </div>
@@ -160,54 +169,54 @@
     <!-- ===== BOTTOM PANEL ===== -->
     <footer class="panel">
       <!-- Desktop controls -->
-      <section class="controls" aria-label="Controls">
+      <section class="controls" aria-label="Controls" data-i18n-aria="controls">
         <div class="dpad">
-          <button class="ctl up" data-control="up" aria-label="Jump">↑</button>
-          <button class="ctl left" data-control="left" aria-label="Move left">←</button>
-          <button class="ctl right" data-control="right" aria-label="Move right">→</button>
-          <button class="ctl down" data-control="down" aria-label="Drop down">↓</button>
+          <button class="ctl up" data-control="up" aria-label="Jump" data-i18n-aria="jump">↑</button>
+          <button class="ctl left" data-control="left" aria-label="Move left" data-i18n-aria="moveLeft">←</button>
+          <button class="ctl right" data-control="right" aria-label="Move right" data-i18n-aria="moveRight">→</button>
+          <button class="ctl down" data-control="down" aria-label="Drop down" data-i18n-aria="dropDown">↓</button>
         </div>
         <div class="interact-wrap">
-          <button class="ctl interact" data-control="act" aria-label="Interact"><svg><use href="#i-hand"/></svg></button>
-          <span>Interact</span>
+          <button class="ctl interact" data-control="act" aria-label="Interact" data-i18n-aria="interact"><svg><use href="#i-hand"/></svg></button>
+          <span data-i18n="interact">Interact</span>
         </div>
-        <span class="caption">Controls</span>
+        <span class="caption" data-i18n="controls">Controls</span>
       </section>
 
       <!-- Collect / purify -->
       <section class="purify" aria-label="Progress">
         <h2 id="progressTitle">Collect / Purify Progress</h2>
         <div class="steps" data-mode="village">
-          <div class="step" title="Collect">
+          <div class="step" title="Collect" data-i18n-title="stCollect">
             <svg viewBox="0 0 24 24"><path class="drop" d="M12 2s7 7.6 7 12.2A7 7 0 0 1 5 14.2C5 9.6 12 2 12 2z"/></svg>
           </div>
           <span class="arrow"></span>
-          <div class="step" title="Dirty water">
+          <div class="step" title="Dirty water" data-i18n-title="stDirty">
             <svg viewBox="0 0 24 24"><rect class="jar" x="5" y="5" width="14" height="17" rx="2"/><rect class="lid" x="7" y="2" width="10" height="3" rx="1"/><rect class="dirty" x="6.5" y="9" width="11" height="11.5" rx="1"/></svg>
           </div>
           <span class="arrow"></span>
-          <div class="step" title="Filtering">
+          <div class="step" title="Filtering" data-i18n-title="stFilter">
             <svg viewBox="0 0 24 24"><rect class="jar" x="5" y="5" width="14" height="17" rx="2"/><rect class="lid" x="7" y="2" width="10" height="3" rx="1"/><rect class="dirty" x="6.5" y="9" width="11" height="4"/><rect class="sand" x="6.5" y="13" width="11" height="3"/><rect class="clean" x="6.5" y="16" width="11" height="4.5" rx="1"/></svg>
           </div>
           <span class="arrow"></span>
-          <div class="step" title="Clean water">
+          <div class="step" title="Clean water" data-i18n-title="stClean">
             <svg viewBox="0 0 24 24"><path class="drop clean" d="M12 2s7 7.6 7 12.2A7 7 0 0 1 5 14.2C5 9.6 12 2 12 2z"/><path class="shine" d="M9 13a3 3 0 0 0 3 3" fill="none"/></svg>
           </div>
         </div>
         <div class="steps" data-mode="warehouse">
-          <div class="step" title="Case on belt">
+          <div class="step" title="Case on belt" data-i18n-title="stBelt">
             <svg viewBox="0 0 24 24"><rect class="crate" x="4" y="8" width="16" height="11" rx="1.5"/><rect class="tape" x="11" y="8" width="2" height="11"/><rect class="belt" x="1" y="20" width="22" height="2.5" rx="1.2"/></svg>
           </div>
           <span class="arrow"></span>
-          <div class="step" title="Carrying">
+          <div class="step" title="Carrying" data-i18n-title="stCarry">
             <svg viewBox="0 0 24 24"><rect class="crate" x="5" y="2.5" width="14" height="8.5" rx="1.5"/><rect class="crate" x="5" y="12.5" width="14" height="8.5" rx="1.5"/><rect class="tape" x="11" y="2.5" width="2" height="8.5"/><rect class="tape" x="11" y="12.5" width="2" height="8.5"/></svg>
           </div>
           <span class="arrow"></span>
-          <div class="step" title="Loaded">
+          <div class="step" title="Loaded" data-i18n-title="stLoaded">
             <svg viewBox="0 0 24 24"><rect class="box" x="1" y="5" width="15" height="12" rx="1"/><path class="cab" d="M16 9h4l3 4v4h-7z"/><circle class="wheel" cx="6" cy="19" r="2.5"/><circle class="wheel" cx="18" cy="19" r="2.5"/></svg>
           </div>
           <span class="arrow"></span>
-          <div class="step" title="Delivered">
+          <div class="step" title="Delivered" data-i18n-title="stDelivered">
             <svg viewBox="0 0 24 24"><path class="drop clean" d="M12 2s7 7.6 7 12.2A7 7 0 0 1 5 14.2C5 9.6 12 2 12 2z"/><path class="check" d="M8.5 14.5l2.5 2.5 4.5-5" fill="none"/></svg>
           </div>
         </div>
@@ -222,21 +231,22 @@
       <section class="herd" aria-label="Village status">
         <div class="herd-head">
           <span><span id="herdLabel">Livestock</span> <b id="livestock">5</b></span>
-          <span>Level <b id="level">1</b></span>
+          <span><span data-i18n="level">Level</span> <b id="level">1</b></span>
         </div>
         <div class="pen" id="pen"></div>
       </section>
 
       <!-- Mobile touch bar -->
-      <nav class="touchbar" aria-label="Touch controls">
-        <button class="ctl" data-control="left" aria-label="Move left">←</button>
-        <button class="ctl" data-control="right" aria-label="Move right">→</button>
-        <button class="ctl" data-control="up" aria-label="Jump">↑</button>
-        <button class="ctl act" data-control="act" aria-label="Interact"><svg><use href="#i-hand"/></svg></button>
+      <nav class="touchbar" aria-label="Touch controls" data-i18n-aria="touchControls">
+        <button class="ctl" data-control="left" aria-label="Move left" data-i18n-aria="moveLeft">←</button>
+        <button class="ctl" data-control="right" aria-label="Move right" data-i18n-aria="moveRight">→</button>
+        <button class="ctl" data-control="up" aria-label="Jump" data-i18n-aria="jump">↑</button>
+        <button class="ctl act" data-control="act" aria-label="Interact" data-i18n-aria="interact"><svg><use href="#i-hand"/></svg></button>
       </nav>
     </footer>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

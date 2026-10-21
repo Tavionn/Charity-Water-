@@ -36,6 +36,17 @@ Open `index.html` in any web browser. No installs or build steps are needed.
 | Pause | P or Esc | Menu (☰) |
 | Restart | — | Reset button in the header |
 
+## Languages
+
+Use the globe menu in the header to switch between **English** and **العربية (Arabic)**. Arabic reads right to left, so choosing it:
+
+- translates every menu, message, and label (including the ones drawn in the game scene)
+- sets `dir="rtl"` on the page so the header, panels, and progress steps mirror
+- mirrors the game world, so the village and warehouse start on the right, while the arrow keys still move you the way they point
+- remembers your choice for next time
+
+All translations live in `i18n.js`.
+
 ## Extra credit (LevelUp)
 
 - **Challenge that reduces score:** polluted drops, the Restricted Area, the forklift, and leaking cases all cost points.
@@ -47,5 +58,6 @@ Open `index.html` in any web browser. No installs or build steps are needed.
 - `index.html`: page layout (header, game area, control panels, menus)
 - `style.css`: styling and the responsive layout for desktop and mobile
 - `script.js`: game logic and canvas drawing
+- `i18n.js`: English and Arabic text, plus the language switching
 
 Learn more about clean water at [charitywater.org](https://www.charitywater.org).

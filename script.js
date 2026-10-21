@@ -29,23 +29,20 @@
     crateSize: 26,
   };
 
-  const FACTS = [
-    '100% of public donations to charity: water go directly to fund clean water projects.',
-    'Millions of people around the world still live without access to clean drinking water.',
-    'In many communities, women and girls spend hours every day walking to collect water.',
-    'Clean water close to home means more time for school, work, and family.',
-    'Biosand filters use layers of sand and gravel to remove dirt and many germs from water.',
-  ];
+  // Translations live in i18n.js. tr('key') returns the text in the current language.
+  const tr = (key, vars) => window.I18N.t(key, vars);
+  // In Arabic the whole game is mirrored so it reads right to left
+  const isRTL = () => window.I18N.rtl;
 
-  // Text that changes with the chosen role
+  // Translation keys for text that changes with the chosen role
   const MODE_TEXT = {
     village: {
-      bar: 'Village water', progress: 'Collect / Purify Progress', carry: 'Jerry can',
-      herd: 'Livestock', icon: '#i-goat', endHerd: 'Livestock', help: 'How to Play: Villager',
+      bar: 'barVillage', progress: 'progVillage', carry: 'carryCan',
+      herd: 'herdLivestock', icon: '#i-goat', endHerd: 'herdLivestock', help: 'helpVillager',
     },
     warehouse: {
-      bar: 'Truck load', progress: 'Pack / Load / Deliver Progress', carry: 'Carrying',
-      herd: 'Trucks sent', icon: '#i-truck', endHerd: 'Trucks sent', help: 'How to Play: Volunteer',
+      bar: 'barTruck', progress: 'progTruck', carry: 'carrying',
+      herd: 'herdTrucks', icon: '#i-truck', endHerd: 'herdTrucks', help: 'helpVolunteer',
     },
   };
 
@@ -133,17 +130,21 @@
   let S = null;
   let mode = 'village';
 
+  function applyModeText() {
+    const t = MODE_TEXT[mode];
+    ui.barLabel.textContent = tr(t.bar);
+    ui.progressTitle.textContent = tr(t.progress);
+    ui.carryLabel.textContent = tr(t.carry);
+    ui.herdLabel.textContent = tr(t.herd);
+    ui.herdIcon.querySelector('use').setAttribute('href', t.icon);
+    $('endHerdLabel').textContent = tr(t.endHerd);
+    $('helpTitle').textContent = tr(t.help);
+  }
+
   function setMode(m) {
     mode = m;
     document.body.dataset.mode = m;
-    const t = MODE_TEXT[m];
-    ui.barLabel.textContent = t.bar;
-    ui.progressTitle.textContent = t.progress;
-    ui.carryLabel.textContent = t.carry;
-    ui.herdLabel.textContent = t.herd;
-    ui.herdIcon.querySelector('use').setAttribute('href', t.icon);
-    $('endHerdLabel').textContent = t.endHerd;
-    $('helpTitle').textContent = t.help;
+    applyModeText();
     ui.steps = [...document.querySelectorAll(`.steps[data-mode="${m}"] .step`)];
     for (const k in cache) delete cache[k];
     resize(); // each role has its own minimum world width
@@ -260,9 +261,7 @@
     [ui.startOverlay, ui.menuOverlay, ui.endOverlay, ui.helpOverlay].forEach((o) => show(o, false));
     newGame(m);
     S.running = true;
-    toast(m === 'village'
-      ? 'Catch the clean blue drops and carry them to the filter.'
-      : 'Grab cases from the belt and load the truck.', 2600);
+    toast(tr(m === 'village' ? 'startVillage' : 'startWarehouse'), 2600);
   }
 
   function openRoleSelect() {
@@ -291,11 +290,11 @@
   // Reset: restart the current role from scratch whenever the player wants
   $('resetBtn').addEventListener('click', () => {
     if (ui.startOverlay.classList.contains('show')) {
-      toast('Pick a role to start playing.');
+      toast(tr('resetPick'));
       return;
     }
     startRole(mode);
-    toast('Game reset. Fresh start!');
+    toast(tr('resetDone'));
   });
   $('againBtn').addEventListener('click', () => startRole(mode));
   $('endSwitchBtn').addEventListener('click', openRoleSelect);
@@ -350,16 +349,14 @@
     S.over = true;
     S.running = false;
     const village = S.mode === 'village';
-    $('endTitle').textContent = won ? 'Well done' : 'Game over';
-    $('endText').textContent = village
-      ? (won ? 'The village has a steady supply of clean water. A brighter tomorrow starts here.'
-             : 'The village still needs you. Every drop counts. Try again.')
-      : (won ? 'Five trucks of clean water are on the road to the villages. Great work.'
-             : 'The trucks are still waiting. Every case counts. Try again.');
+    S.won = won;
+    $('endTitle').textContent = tr(won ? 'wellDone' : 'gameOver');
+    $('endText').textContent = tr(village ? (won ? 'winVillage' : 'loseVillage') : (won ? 'winWarehouse' : 'loseWarehouse'));
     $('endScore').textContent = S.score;
     $('endLevel').textContent = Math.min(S.level, CFG.maxLevel);
     $('endHerd').textContent = village ? S.livestock : S.trucksSent;
-    $('endFact').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
+    S.factIndex = Math.floor(Math.random() * tr('facts').length);
+    $('endFact').textContent = tr('facts')[S.factIndex];
     show(ui.endOverlay, true);
     if (won) celebrate(220);
   }
@@ -372,7 +369,7 @@
 
     // Movement (spills slow you down in the warehouse)
     const slow = S.mode === 'warehouse' && p.onGround && S.spills.some((s) => Math.abs(p.x - s.x) < s.w / 2);
-    const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    const dir = ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * (isRTL() ? -1 : 1);
     p.vx = dir * CFG.speed * (slow ? 0.45 : 1);
     if (dir) p.facing = dir;
     p.x = clamp(p.x + p.vx * dt, 14, W - 14);
@@ -422,7 +419,7 @@
         S.score = Math.max(0, S.score - 25);
         popup(p.x, p.y - 10, '−25', '#e2574c');
       }
-      hurt('Restricted area. The guard sent you back. −25 points');
+      hurt(tr('restricted'));
       p.x = world.signX - 60;
       p.vy = -320;
       p.onGround = false;
@@ -454,17 +451,17 @@
           S.score = Math.max(0, S.score - 20);
           burst(d.x, d.y, '#6b5634', 10);
           popup(d.x, d.y, '−20', '#e2574c');
-          hurt('Polluted water. Avoid the brown drops. −20 points');
+          hurt(tr('polluted'));
           if (S.over) return;
         } else if (S.carry < CFG.canCapacity) {
           S.carry += 1;
           S.score += 10;
           burst(d.x, d.y, '#8fd0f5', 6, 120);
           popup(d.x, d.y, '+10', '#8fd0f5');
-          if (S.carry === CFG.canCapacity) toast('Jerry can full. Take it to the filter on the bridge.');
+          if (S.carry === CFG.canCapacity) toast(tr('canFull'));
         } else {
           burst(d.x, d.y, '#8fd0f5', 4, 80);
-          warn('Your can is full. Purify it at the bridge.');
+          warn(tr('canFullWarn'));
         }
         continue;
       }
@@ -497,9 +494,9 @@
         const gained = pu.amount * CFG.waterPerDrop;
         S.water += gained;
         S.score += pu.amount * 15;
-        popup(world.stationX, gy - 120, `+${gained} clean water`, '#8fd0f5');
+        popup(world.stationX, gy - 120, tr('popWater', { n: gained }), '#8fd0f5');
         burst(world.stationX + 30, gy - 40, '#8fd0f5', 14, 160);
-        toast(`Filtered. +${gained} clean water for the village.`);
+        toast(tr('filtered', { n: gained }));
       }
     }
     pu.done = Math.max(0, pu.done - dt);
@@ -510,7 +507,7 @@
       S.water = CFG.startWater;
       S.livestock = Math.max(0, S.livestock - 1);
       renderPen(true);
-      hurt('The village ran dry. You lost a heart and an animal.', true);
+      hurt(tr('ranDry'), true);
       if (S.over) return;
     }
 
@@ -528,7 +525,7 @@
       S.hearts = Math.min(CFG.maxHearts, S.hearts + 1);
       renderHearts();
       renderPen(true);
-      toast(`Level ${S.level}. The herd grew, and the rain is getting heavier and dirtier.`, 2800);
+      toast(tr('levelVillage', { n: S.level }), 2800);
       celebrate(60);
       burst(p.x, p.y, '#ffc907', 20, 220);
     }
@@ -544,8 +541,8 @@
   function interactVillage() {
     const p = S.player;
     if (nearStation()) {
-      if (S.purify.active) { toast('The filter is working…'); return; }
-      if (S.carry === 0) { toast('Your can is empty. Catch some clean drops first.'); return; }
+      if (S.purify.active) { toast(tr('filterBusy')); return; }
+      if (S.carry === 0) { toast(tr('canEmpty')); return; }
       S.purify = { active: true, t: 0, amount: S.carry, done: 0 };
       S.carry = 0;
       return;
@@ -554,11 +551,11 @@
     if (ti >= 0) {
       const t = S.trash.splice(ti, 1)[0];
       S.score += 25;
-      popup(t.x, world.groundY - 30, 'Cleanup +25', '#9fd39a');
+      popup(t.x, world.groundY - 30, tr('popCleanup'), '#9fd39a');
       burst(t.x, world.groundY - 10, '#c9b28a', 8);
       return;
     }
-    toast(p.x < world.stationX ? 'Head right to the filter on the bridge →' : '← Head left to the filter on the bridge');
+    toast(tr(onScreenRight(p.x < world.stationX) ? 'filterRight' : 'filterLeft'));
   }
 
   // ===== Volunteer (warehouse) mode =====
@@ -598,10 +595,10 @@
       if (dropped) {
         burst(p.x, p.y + 20, '#8fd0f5', 12, 180);
         burst(p.x, p.y + 20, '#c79a62', 8, 160);
-        popup(p.x, p.y, `−${dropped} case${dropped > 1 ? 's' : ''}`, '#e2574c');
+        popup(p.x, p.y, tr('popDropped', { n: dropped }), '#e2574c');
         S.stack = [];
       }
-      hurt(dropped ? 'Forklift hit. You dropped your cases. −25 points' : 'Forklift hit. Jump over it next time. −25 points');
+      hurt(tr(dropped ? 'forkliftDrop' : 'forkliftHit'));
       p.x = clamp(p.x + (p.x < L.x ? -50 : 50), 14, W - 14);
       p.vy = -300;
       p.onGround = false;
@@ -629,7 +626,7 @@
         if (T.full) {
           if (S.trucksSent >= CFG.maxLevel) { endGame(true); return; }
           S.level += 1;
-          toast(`Level ${S.level}. Bigger truck, faster forklift.`, 2600);
+          toast(tr('levelTruck', { n: S.level }), 2600);
           celebrate(60);
         }
         S.truck = makeTruck(S.level);
@@ -640,7 +637,7 @@
         T.time = 0;
         T.leaving = 0.001;
         S.score += T.load * 5;
-        hurt(`The truck left with only ${T.load}/${T.target} cases.`, true);
+        hurt(tr('truckLeft', { load: T.load, target: T.target }), true);
       }
     }
     S.deliveredFlash = Math.max(0, S.deliveredFlash - dt);
@@ -667,31 +664,31 @@
     if (nearBin() && (holdingBad || !nearBelt())) {
       const bad = S.stack.filter((b) => b).length;
       if (!bad) {
-        toast(S.stack.length ? 'These cases are fine. Load them on the truck.' : 'Only leaking cases go in the recycling bin.');
+        toast(tr(S.stack.length ? 'casesFine' : 'onlyLeaking'));
         return;
       }
       S.stack = S.stack.filter((b) => !b);
       S.score += bad * 15;
-      popup(world.binX + 20, gy - 90, `Recycled +${bad * 15}`, '#9fd39a');
+      popup(world.binX + 20, gy - 90, tr('popRecycled', { n: bad * 15 }), '#9fd39a');
       burst(world.binX, gy - 60, '#9fd39a', 8);
       return;
     }
 
     if (nearBelt()) {
-      if (S.stack.length >= CFG.carryMax) { toast('Hands full. Take these to the truck.'); return; }
+      if (S.stack.length >= CFG.carryMax) { toast(tr('handsFull')); return; }
       const head = beltReady();
-      if (!head) { toast('Waiting for the next case…'); return; }
+      if (!head) { toast(tr('waitingCase')); return; }
       S.belt.shift();
       S.stack.push(head.bad);
-      popup(world.beltEnd, gy - 80, head.bad ? 'Leaking case' : '+1 case', head.bad ? '#e2574c' : '#8fd0f5');
-      if (head.bad) toast('That case is leaking. Put it in the recycling bin.');
+      popup(world.beltEnd, gy - 80, tr(head.bad ? 'popLeaking' : 'popCase'), head.bad ? '#e2574c' : '#8fd0f5');
+      if (head.bad) toast(tr('leakingHeld'));
       return;
     }
 
     if (nearTruck()) {
       const T = S.truck;
-      if (T.arriving > 0 || T.leaving > 0) { toast('The truck is on the road. Hang on.'); return; }
-      if (!S.stack.length) { toast('Your hands are empty. Grab cases from the belt.'); return; }
+      if (T.arriving > 0 || T.leaving > 0) { toast(tr('truckBusy')); return; }
+      if (!S.stack.length) { toast(tr('handsEmpty')); return; }
       const bad = S.stack.filter((b) => b).length;
       const good = S.stack.length - bad;
       S.stack = [];
@@ -699,13 +696,13 @@
         const add = Math.min(good, T.target - T.load);
         T.load += add;
         S.score += add * 20;
-        popup(world.truckBack + 40, gy - 120, `+${add} loaded`, '#8fd0f5');
+        popup(world.truckBack + 40, gy - 120, tr('popLoaded', { n: add }), '#8fd0f5');
       }
       if (bad) {
         S.score = Math.max(0, S.score - bad * 30);
-        popup(world.truckBack + 40, gy - 140, `−${bad * 30} leaking`, '#e2574c');
+        popup(world.truckBack + 40, gy - 140, tr('popLeakPenalty', { n: bad * 30 }), '#e2574c');
         burst(world.truckBack, gy - 50, '#8a6a45', 10);
-        hurt(`A leaking case got on the truck. −${bad * 30} points`, true);
+        hurt(tr('leakLoaded', { n: bad * 30 }), true);
         if (S.over) return;
       }
       if (T.load >= T.target) {
@@ -716,7 +713,7 @@
         S.score += bonus;
         S.deliveredFlash = 1.6;
         renderPen(true);
-        toast(`Truck full and heading to the villages. +${bonus}`, 2600);
+        toast(tr('truckFull', { n: bonus }), 2600);
         burst(world.truckBack + 60, gy - 80, '#ffc907', 18, 220);
       }
       return;
@@ -726,12 +723,13 @@
     if (si >= 0) {
       const s = S.spills.splice(si, 1)[0];
       S.score += 10;
-      popup(s.x, gy - 30, 'Mopped +10', '#9fd39a');
+      popup(s.x, gy - 30, tr('popMopped'), '#9fd39a');
       burst(s.x, gy - 4, '#bfe6ff', 8, 100);
       return;
     }
 
-    toast(S.stack.length ? 'Head right to load the truck →' : '← Grab cases from the conveyor belt');
+    if (S.stack.length) toast(tr(onScreenRight(true) ? 'truckRight' : 'truckLeftDir'));
+    else toast(tr(onScreenRight(false) ? 'beltRight' : 'beltLeft'));
   }
 
   // ---------- DOM HUD ----------
@@ -757,7 +755,7 @@
     cache.low = undefined;
     ui.pen.innerHTML = '';
     if (S.mode === 'warehouse' && count === 0) {
-      ui.pen.innerHTML = '<span class="empty-note">Delivered trucks appear here</span>';
+      ui.pen.innerHTML = `<span class="empty-note">${tr('emptyTrucks')}</span>`;
       return;
     }
     const icon = S.mode === 'village' ? '#i-goat' : '#i-truck';
@@ -817,11 +815,11 @@
     lightSteps(stage);
 
     let status;
-    if (pu.done > 0) status = 'Clean water delivered to the village tank.';
-    else if (pu.active) status = pu.t < CFG.purifyTime / 2 ? 'Pouring water into the biosand filter…' : 'Filtering through sand and gravel…';
-    else if (S.carry >= CFG.canCapacity) status = 'Can full. Go to the filter and interact.';
-    else if (S.carry > 0) status = 'Keep catching, or purify now at the bridge.';
-    else status = 'Catch clean blue drops to fill your can.';
+    if (pu.done > 0) status = tr('sDelivered');
+    else if (pu.active) status = tr(pu.t < CFG.purifyTime / 2 ? 'sPouring' : 'sFiltering');
+    else if (S.carry >= CFG.canCapacity) status = tr('sCanFull');
+    else if (S.carry > 0) status = tr('sKeepCatching');
+    else status = tr('sCatch');
     setText(ui.status, 'status', status);
 
     setReady(S.running && ((nearStation() && S.carry > 0 && !pu.active) || (!nearStation() && nearestTrash() >= 0)));
@@ -846,12 +844,12 @@
     const bad = S.stack.some((b) => b);
     const left = T.target - T.load;
     let status;
-    if (S.deliveredFlash > 0) status = 'Truck delivered. Clean water is on the way.';
-    else if (T.arriving > 0) status = 'A new truck is pulling in…';
-    else if (bad) status = 'You are holding a leaking case. Recycle it.';
-    else if (n >= CFG.carryMax) status = 'Hands full. Load the truck.';
-    else if (n) status = 'Grab more, or load the truck now.';
-    else status = `Truck needs ${left} more case${left === 1 ? '' : 's'} · ${Math.ceil(T.time)}s left`;
+    if (S.deliveredFlash > 0) status = tr('sTruckDelivered');
+    else if (T.arriving > 0) status = tr('sPulling');
+    else if (bad) status = tr('sHoldingLeak');
+    else if (n >= CFG.carryMax) status = tr('sHandsFull');
+    else if (n) status = tr('sGrabMore');
+    else status = tr('sTruckNeeds', { n: left, s: Math.ceil(T.time) });
     setText(ui.status, 'status', status);
 
     const truckOpen = !T.leaving && !T.arriving;
@@ -865,7 +863,7 @@
   // =========================================================
   //  ART — flat illustrated style with soft light and depth
   // =========================================================
-  const FONT = 'Inter, "Segoe UI", sans-serif';
+  const fontFor = () => (isRTL() ? '"Cairo", "Segoe UI", Tahoma, sans-serif' : 'Inter, "Segoe UI", sans-serif');
 
   function rr(x, y, w, h, r) {
     ctx.beginPath();
@@ -888,11 +886,27 @@
     return g;
   }
   function label(text, x, y, color, size = 9, weight = 600, align = 'center') {
-    ctx.font = `${weight} ${size}px ${FONT}`;
-    ctx.textAlign = align;
+    ctx.font = `${weight} ${size}px ${fontFor()}`;
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = color;
-    ctx.fillText(text, x, y);
+    if (!isRTL()) {
+      ctx.textAlign = align;
+      ctx.fillText(text, x, y);
+      return;
+    }
+    // The world is drawn mirrored in Arabic, so flip each word back to read normally.
+    // Swapping left/right alignment keeps the text in the same spot on screen.
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(-1, 1);
+    ctx.textAlign = align === 'left' ? 'right' : align === 'right' ? 'left' : align;
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+
+  // Is a world direction (true = toward larger x) on the right side of the screen?
+  function onScreenRight(worldRight) {
+    return worldRight !== isRTL();
   }
   function groundShadow(x, y, rx, a = 0.25) {
     ctx.fillStyle = `rgba(20, 12, 8, ${a})`;
@@ -903,7 +917,7 @@
   // Soft prompt chip ("E  Purify")
   function prompt(x, y, text) {
     const bob = Math.sin(S.time * 3) * 1.5;
-    ctx.font = `600 11px ${FONT}`;
+    ctx.font = `600 11px ${fontFor()}`;
     const tw = ctx.measureText(text).width;
     const key = !isTouch;
     const w = tw + (key ? 34 : 20), h = 24;
@@ -1365,7 +1379,7 @@
     hut(x - 4, gy, 1);
     if (W > 520) hut(x + 62, gy, 0.72);
     waterTank(x + 36, gy);
-    label('VILLAGE', x + 10, gy - 76, 'rgba(255, 240, 220, 0.65)', 8, 700);
+    label(tr('cVillage'), x + 10, gy - 76, 'rgba(255, 240, 220, 0.65)', 8, 700);
   }
 
   function hut(x, gy, s) {
@@ -1480,7 +1494,7 @@
       ctx.fillStyle = 'rgba(160, 220, 255, 0.85)';
       ctx.fillRect(bx + 0.5, top + 19, 1.6, base - 15 - top - 19);
     }
-    label('BIOSAND FILTER', x + 4, top - 12, 'rgba(255, 245, 230, 0.7)', 8, 700);
+    label(tr('cFilter'), x + 4, top - 12, 'rgba(255, 245, 230, 0.7)', 8, 700);
 
     if (pu.active) {
       ctx.strokeStyle = 'rgba(255,255,255,0.15)';
@@ -1492,7 +1506,7 @@
       ctx.arc(x, top - 30, 9, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
       ctx.stroke();
     } else if (nearStation() && S.carry > 0) {
-      prompt(x, top - 32, 'Purify');
+      prompt(x, top - 32, tr('pPurify'));
     }
   }
 
@@ -1545,7 +1559,7 @@
       facing: g.dir, walk: g.walk, moving: true, scale: 1.04,
       skin: '#8a5a3c', top: '#4a5540', bottom: '#2f352b', head: 'cap', capColor: '#2b3328', glasses: true,
     });
-    if (g.alert > 0) prompt(g.x, gy - 86, 'Keep out');
+    if (g.alert > 0) prompt(g.x, gy - 86, tr('pKeepOut'));
 
     // sign on the gate post
     ctx.fillStyle = '#5c6268';
@@ -1556,8 +1570,8 @@
     ctx.fill();
     ctx.fillStyle = '#b8312a';
     ctx.fillRect(sx, gy - 82, 60, 11);
-    label('RESTRICTED', sx + 30, gy - 73.5, '#fff', 7.5, 700);
-    label('AREA', sx + 30, gy - 61, '#2a2622', 9, 700);
+    label(tr('cSign1'), sx + 30, gy - 73.5, '#fff', 7.5, 700);
+    label(tr('cSign2'), sx + 30, gy - 61, '#2a2622', 9, 700);
     ctx.fillStyle = 'rgba(140, 80, 40, 0.3)';
     ellipse(sx + 52, gy - 56, 4, 2);
     ctx.fill();
@@ -1625,7 +1639,7 @@
       ctx.fillRect(-9, -3, 12, 1.2);
       ctx.restore();
     }
-    if (!nearStation() && Math.abs(S.player.x - t.x) < 48) prompt(t.x, y - 34, 'Pick up');
+    if (!nearStation() && Math.abs(S.player.x - t.x) < 48) prompt(t.x, y - 34, tr('pPickUp'));
   }
 
   // ---------- Warehouse art ----------
@@ -1667,7 +1681,7 @@
     ctx.stroke();
 
     // Stenciled wall sign
-    label('CLEAN WATER DEPOT', W * 0.42, gy * 0.42, 'rgba(236, 232, 225, 0.16)', Math.min(26, W * 0.035), 800);
+    label(tr('cDepot'), W * 0.42, gy * 0.42, 'rgba(236, 232, 225, 0.16)', Math.min(26, W * 0.035), 800);
 
     // Pallet racking with shrink-wrapped water
     rack(W * 0.05, gy, Math.min(170, W * 0.26));
@@ -1743,7 +1757,7 @@
         skin: '#c8906a', top: '#34465e', bottom: '#2b3038', head: 'hardhat', vest: true,
         pose: S.stack.length ? 'carry' : null, stack: S.stack,
       });
-      if (p.slipping) label('slippery', p.x, p.y - 10, 'rgba(191, 230, 255, 0.85)', 9, 600);
+      if (p.slipping) label(tr('cSlippery'), p.x, p.y - 10, 'rgba(191, 230, 255, 0.85)', 9, 600);
     }
   }
 
@@ -1859,8 +1873,8 @@
     ctx.fillStyle = '#4f555c';
     ctx.fill();
     S.belt.forEach((c) => drawCase(c.x, top, c.bad));
-    label('PICK UP', end - 4, top - 30, 'rgba(236, 232, 225, 0.55)', 8, 700);
-    if (nearBelt() && S.stack.length < CFG.carryMax && beltReady()) prompt(end, top - 50, 'Grab case');
+    label(tr('cPickUp'), end - 4, top - 30, 'rgba(236, 232, 225, 0.55)', 8, 700);
+    if (nearBelt() && S.stack.length < CFG.carryMax && beltReady()) prompt(end, top - 50, tr('pGrab'));
   }
 
   function recyclingBin(x, gy) {
@@ -1887,8 +1901,8 @@
       ctx.lineTo(x + Math.cos(a + 1.6) * 6, gy - 22 + Math.sin(a + 1.6) * 6);
     }
     ctx.stroke();
-    label('RECYCLING', x, gy - h - 10, 'rgba(236, 232, 225, 0.55)', 8, 700);
-    if (nearBin() && S.stack.some((b) => b)) prompt(x, gy - h - 30, 'Recycle');
+    label(tr('cRecycling'), x, gy - h - 10, 'rgba(236, 232, 225, 0.55)', 8, 700);
+    if (nearBin() && S.stack.some((b) => b)) prompt(x, gy - h - 30, tr('pRecycle'));
   }
 
   function spill(s) {
@@ -1911,7 +1925,7 @@
     ctx.fillStyle = '#1d2024';
     ctx.fillRect(fx - 2.5, gy - 12, 5, 1.2);
     ctx.globalAlpha = 1;
-    if (Math.abs(S.player.x - s.x) < 44 && !nearBelt() && !nearBin() && !nearTruck()) prompt(s.x, gy - 74, 'Mop');
+    if (Math.abs(S.player.x - s.x) < 44 && !nearBelt() && !nearBin() && !nearTruck()) prompt(s.x, gy - 74, tr('pMop'));
   }
 
   function truck(gy, T) {
@@ -1951,7 +1965,7 @@
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fillRect(ix, iy, iw, 4);
     // small drop logo on the box
-    label('CLEAN WATER', x + boxW / 2, boxTop + boxH - 6, 'rgba(40, 40, 40, 0.55)', 7, 700);
+    label(tr('cTruckSide'), x + boxW / 2, boxTop + boxH - 6, 'rgba(40, 40, 40, 0.55)', 7, 700);
 
     // cab
     const cabX = x + boxW + 3, cabTop = boxTop + 26;
@@ -2011,15 +2025,15 @@
     ctx.fill();
     if (open) {
       const urgent = T.time < 10;
-      label(`${T.load}/${T.target} cases`, cx - pillW / 2 + 10, pillY + 13, '#ece8e1', 10, 600, 'left');
-      label(`${Math.ceil(T.time)}s`, cx + pillW / 2 - 10, pillY + 13, urgent ? '#e2574c' : '#ffc907', 10, 700, 'right');
+      label(tr('cCases', { a: T.load, b: T.target }), cx - pillW / 2 + 10, pillY + 13, '#ece8e1', 10, 600, 'left');
+      label(tr('cSecs', { n: Math.ceil(T.time) }), cx + pillW / 2 - 10, pillY + 13, urgent ? '#e2574c' : '#ffc907', 10, 700, 'right');
       ctx.fillStyle = 'rgba(255,255,255,0.12)';
       ctx.fillRect(cx - pillW / 2 + 10, pillY + 18, pillW - 20, 2);
       ctx.fillStyle = urgent ? '#e2574c' : '#5bb6f0';
       ctx.fillRect(cx - pillW / 2 + 10, pillY + 18, (pillW - 20) * (T.time / T.maxTime), 2);
-      if (nearTruck() && S.stack.length) prompt(cx, boxTop + 34, 'Load');
+      if (nearTruck() && S.stack.length) prompt(cx, boxTop + 34, tr('pLoad'));
     } else {
-      label(T.full ? 'On the way to the villages' : (T.arriving ? 'Pulling in…' : 'Leaving…'),
+      label(tr(T.full ? 'cOnWay' : (T.arriving ? 'cPulling' : 'cLeaving')),
         cx, pillY + 17, T.full ? '#9fd39a' : '#ece8e1', 10, 600);
     }
   }
@@ -2076,7 +2090,7 @@
     ctx.fillStyle = '#ff9a1f';
     ellipse(x - 4 * f, gy - 61, 2.2, 2.2);
     ctx.fill();
-    if (L.honk > 0) prompt(x, gy - 82, 'Beep');
+    if (L.honk > 0) prompt(x, gy - 82, tr('pBeep'));
   }
 
   // ---------- Confetti (win celebration) ----------
@@ -2147,6 +2161,11 @@
     const sx = S.shake > 0 ? rand(-3, 3) : 0;
     const sy = S.shake > 0 ? rand(-2, 2) : 0;
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, sx * dpr * scale, sy * dpr * scale);
+    if (isRTL()) {
+      // Arabic reads right to left, so the village / warehouse starts on the right
+      ctx.translate(W, 0);
+      ctx.scale(-1, 1);
+    }
     if (S.mode === 'village') drawVillage();
     else drawWarehouse();
 
@@ -2187,6 +2206,25 @@
     syncUI();
     requestAnimationFrame(loop);
   }
+
+  // ---------- Language ----------
+  const langSelect = $('langSelect');
+  langSelect.value = window.I18N.lang;
+  langSelect.addEventListener('change', () => window.I18N.setLang(langSelect.value));
+  window.I18N.onChange(() => {
+    langSelect.value = window.I18N.lang;
+    applyModeText();
+    for (const k in cache) delete cache[k];
+    renderPen(true);
+    // refresh an open end screen in the new language
+    if (S.over) {
+      const village = S.mode === 'village';
+      $('endTitle').textContent = tr(S.won ? 'wellDone' : 'gameOver');
+      $('endText').textContent = tr(village ? (S.won ? 'winVillage' : 'loseVillage') : (S.won ? 'winWarehouse' : 'loseWarehouse'));
+      $('endFact').textContent = tr('facts')[S.factIndex || 0];
+    }
+  });
+  window.I18N.applyPage();
 
   // ---------- Boot ----------
   window.addEventListener('resize', resize);

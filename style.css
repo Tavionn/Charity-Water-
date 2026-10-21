@@ -49,10 +49,10 @@ svg { fill: currentColor; }
 /* ===== Header ===== */
 .topbar {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto;
   grid-template-areas:
-    "brand charity reset menu"
-    "stats stats stats stats";
+    "brand charity lang reset menu"
+    "stats stats stats stats stats";
   align-items: center;
   gap: 8px 14px;
   padding: 12px 20px;
@@ -147,7 +147,8 @@ svg { fill: currentColor; }
 }
 .bar-fill {
   position: absolute;
-  inset: 0 auto 0 0;
+  inset-block: 0;
+  inset-inline-start: 0;
   width: 20%;
   background: linear-gradient(90deg, #2a7fc4, #5bb6f0);
   transition: width 0.3s ease, background 0.3s;
@@ -234,7 +235,7 @@ svg { fill: currentColor; }
 .eyebrow { margin: 0 0 6px; font-size: 0.72rem; font-weight: 600; color: var(--yellow); text-transform: uppercase; letter-spacing: 1.6px; }
 .lead { margin: 0 0 20px; color: var(--muted); line-height: 1.5; }
 
-.howto { list-style: none; padding: 0; margin: 0 0 18px; text-align: left; font-size: 0.9rem; color: #cfcac2; }
+.howto { list-style: none; padding: 0; margin: 0 0 18px; text-align: start; font-size: 0.9rem; color: #cfcac2; }
 .howto li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); line-height: 1.4; }
 .howto li:last-child { border-bottom: 0; }
 .howto b { color: var(--text); font-weight: 600; }
@@ -296,7 +297,7 @@ body.touch .keys-touch { display: block; }
 .end-stats div { flex: 1; padding: 12px 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
 .end-stats span { display: block; font-size: 0.68rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
 .end-stats b { font-family: var(--head); font-weight: 700; font-size: 1.6rem; }
-.fact { margin: 0 0 18px; padding: 12px 14px; border-left: 3px solid var(--yellow); border-radius: 4px 10px 10px 4px; background: var(--surface-2); text-align: left; font-size: 0.86rem; line-height: 1.5; color: #cfcac2; }
+.fact { margin: 0 0 18px; padding: 12px 14px; border-inline-start: 3px solid var(--yellow); border-start-start-radius: 4px; border-end-start-radius: 4px; border-start-end-radius: 10px; border-end-end-radius: 10px; background: var(--surface-2); text-align: start; font-size: 0.86rem; line-height: 1.5; color: #cfcac2; }
 
 /* Role cards */
 .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
@@ -312,7 +313,7 @@ body.touch .keys-touch { display: block; }
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent),
     var(--surface-2);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
@@ -346,7 +347,7 @@ body.touch .keys-touch { display: block; }
   border-top: 1px solid var(--line);
 }
 .panel > section { padding: 14px 18px; min-width: 0; }
-.panel > section + section { border-left: 1px solid var(--line); }
+.panel > section + section { border-inline-start: 1px solid var(--line); }
 .panel h2, .herd-head { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.9px; }
 .panel h2 { margin: 0; font-family: inherit; }
 
@@ -378,7 +379,7 @@ body.touch .keys-touch { display: block; }
 .ctl.interact { width: 58px; height: 58px; border-radius: 14px; }
 .ctl.ready { border-color: var(--yellow); color: var(--yellow); box-shadow: 0 0 0 4px rgba(255, 201, 7, 0.14); animation: glow 1.4s ease-in-out infinite; }
 @keyframes glow { 50% { box-shadow: 0 0 0 7px rgba(255, 201, 7, 0.06); } }
-.caption { position: absolute; left: 18px; top: 14px; font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.9px; }
+.caption { position: absolute; inset-inline-start: 18px; top: 14px; font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.9px; }
 
 .purify { display: flex; flex-direction: column; justify-content: center; gap: 9px; }
 .steps { display: flex; align-items: center; gap: 8px; }
@@ -422,7 +423,7 @@ body.touch .keys-touch { display: block; }
 
 .herd { display: flex; flex-direction: column; gap: 10px; }
 .herd-head { display: flex; justify-content: space-between; }
-.herd-head b { margin-left: 4px; font-family: var(--head); font-size: 1rem; color: var(--text); letter-spacing: 0; }
+.herd-head b { margin-inline-start: 4px; font-family: var(--head); font-size: 1rem; color: var(--text); letter-spacing: 0; }
 .pen {
   flex: 1;
   display: flex;
@@ -456,11 +457,11 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
 /* ===== Mobile / narrow screens ===== */
 @media (max-width: 760px) {
   .topbar {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto auto auto;
     grid-template-areas:
-      "brand reset menu"
-      "charity reset menu"
-      "stats stats stats";
+      "brand lang reset menu"
+      "charity lang reset menu"
+      "stats stats stats stats";
     gap: 6px 10px;
     padding: 10px 14px;
   }
@@ -469,15 +470,16 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
   .charity { justify-self: start; padding: 3px 10px; font-size: 0.72rem; }
   .menu-btn { align-self: start; }
   .reset-btn { align-self: start; padding: 0 10px; }
+  .lang { align-self: start; }
   .stats { gap: 8px 14px; }
   .stat.water { flex: 1 1 100%; max-width: none; }
   .level-mini, .herd-mini { display: flex; }
-  .hearts { margin-left: auto; }
+  .hearts { margin-inline-start: auto; }
   .stat b { font-size: 1rem; }
 
   .panel { display: flex; flex-direction: column; height: auto; padding-bottom: env(safe-area-inset-bottom); }
   .controls, .herd { display: none; }
-  .panel > section + section { border-left: 0; }
+  .panel > section + section { border-inline-start: 0; }
   .purify { padding: 10px 14px 6px; gap: 6px; }
   .purify h2 { display: none; }
   .steps { justify-content: center; }
@@ -503,4 +505,69 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
   .panel { height: 124px; }
   .dpad { grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 30px); }
   .step { width: 38px; height: 38px; }
+}
+
+/* ===== Language picker ===== */
+.lang {
+  grid-area: lang;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  transition: border-color 0.15s;
+}
+.lang:hover, .lang:focus-within { border-color: var(--yellow); }
+.lang svg { position: absolute; inset-inline-start: 10px; width: 16px; height: 16px; pointer-events: none; }
+.lang select {
+  height: 100%;
+  padding-block: 0;
+  padding-inline: 32px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.lang select:focus { outline: none; }
+.lang option { background: var(--surface-2); color: var(--text); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ===== Arabic / right-to-left ===== */
+html[lang="ar"] body,
+html[lang="ar"] button,
+html[lang="ar"] select { font-family: "Cairo", "Segoe UI", Tahoma, sans-serif; }
+html[lang="ar"] { --head: "Cairo", "Segoe UI", Tahoma, sans-serif; }
+/* Arabic letters join together, so no extra letter spacing or forced capitals */
+html[lang="ar"] .stat .k,
+html[lang="ar"] .bar-label,
+html[lang="ar"] .panel h2,
+html[lang="ar"] .herd-head,
+html[lang="ar"] .caption,
+html[lang="ar"] .eyebrow,
+html[lang="ar"] .end-stats span { letter-spacing: 0; text-transform: none; }
+html[lang="ar"] .card h2,
+html[lang="ar"] .brand h1 { letter-spacing: 0; }
+/* Arrow buttons keep their real-world directions in either language */
+.dpad, .touchbar { direction: ltr; }
+/* Keys and numbers read left to right even inside Arabic sentences */
+kbd, .bar-label b, .stat b, .can-label b { unicode-bidi: isolate; direction: ltr; }
+
+@media (max-width: 420px) {
+  .reset-btn span { display: none; }
+  .lang select { padding-inline: 30px 8px; }
 }
