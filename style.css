@@ -498,14 +498,6 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
   .howto { font-size: 0.84rem; }
 }
 
-/* Short landscape phones: keep the game visible */
-@media (max-height: 520px) and (orientation: landscape) {
-  .tagline { display: none; }
-  .topbar { padding: 6px 14px; }
-  .panel { height: 124px; }
-  .dpad { grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 30px); }
-  .step { width: 38px; height: 38px; }
-}
 
 /* ===== Language picker ===== */
 .lang {
@@ -568,4 +560,75 @@ kbd, .bar-label b, .stat b, .can-label b { unicode-bidi: isolate; direction: ltr
 @media (max-width: 420px) {
   .reset-btn span { display: none; }
   .lang select { padding-inline: 30px 8px; }
+}
+
+/* ===== Landscape phones: full-screen game, buttons float on top =====
+   (kept last so it wins over the narrow-screen rules above) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .app { position: relative; }
+
+  /* one slim header row */
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas: "brand stats lang reset menu";
+    gap: 10px;
+    padding: 6px max(12px, env(safe-area-inset-right)) 6px max(12px, env(safe-area-inset-left));
+  }
+  .brand h1 { font-size: 1.05rem; white-space: nowrap; }
+  .tagline, .charity, .herd-mini { display: none; }
+  .stats { flex-wrap: nowrap; gap: 12px; min-width: 0; }
+  .stat.water { flex: 1 1 auto; min-width: 120px; max-width: 360px; }
+  .level-mini { display: flex; }
+  .hearts { margin-inline-start: auto; }
+  .stat { font-size: 0.78rem; }
+  .stat b { font-size: 0.95rem; }
+  .bar { height: 20px; }
+  .bar-label { line-height: 20px; font-size: 0.68rem; }
+  .menu-btn, .reset-btn, .lang { height: 34px; align-self: center; }
+  .menu-btn { width: 34px; }
+  .reset-btn { padding: 0 10px; }
+  .reset-btn span { display: none; }
+  .lang select { padding-inline: 30px 8px; font-size: 0.78rem; }
+
+  /* the game fills everything under the header */
+  .stage { min-height: 0; }
+  .panel {
+    position: absolute;
+    inset: auto 0 0 0;
+    display: block;
+    height: auto;
+    background: none;
+    border: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .controls, .purify, .herd { display: none; }
+
+  /* ← → on the left, ↑ and the hand on the right */
+  .touchbar {
+    display: grid;
+    grid-template-columns: 58px 58px 1fr 58px 58px;
+    gap: 10px;
+    padding: 0 max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    border: 0;
+  }
+  .touchbar .ctl {
+    height: 52px;
+    border-radius: 16px;
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(23, 26, 31, 0.55);
+    backdrop-filter: blur(6px);
+    font-size: 1.3rem;
+    pointer-events: auto;
+  }
+  .touchbar .ctl:nth-child(3) { grid-column: 4; }
+  .touchbar .ctl:nth-child(4) { grid-column: 5; }
+  .touchbar .ctl.pressed { background: var(--yellow); }
+
+  .card { padding: 16px 18px; }
+  .card h2.title { font-size: 1.6rem; }
+  .roles { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .role { padding: 12px; gap: 8px; }
+  .role-desc { font-size: 0.8rem; }
+  .lead { margin-bottom: 12px; }
 }

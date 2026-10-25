@@ -11,6 +11,11 @@
   const CFG = {
     baseH: 420,          // logical game height (world units)
     minW: { village: 380, warehouse: 520 }, // narrowest logical width before we scale down
+    // Phones held upright get a zoomed-in camera that follows the player
+    phoneMaxWidth: 600,  // stage widths (CSS px) below this use the follow camera
+    phoneBaseH: 340,     // logical height shown on phones (smaller = bigger art)
+    phoneViewW: 300,     // narrowest logical slice of the world shown at once
+    phoneWorldW: 760,    // full world width on phones (same layout as a laptop)
     maxHearts: 3,
     maxLevel: 5,
     gravity: 1500,
@@ -69,6 +74,11 @@
 
   // ---------- World sizing ----------
   let W = 800, H = 540, scale = 1, dpr = 1;
+  // viewW = how much of the world fits on screen; camX = how far the camera has scrolled
+  let viewW = 800, camX = 0, followCam = false, snapCam = true;
+  // Landscape phones float the buttons over the game, so the floor sits a little higher
+  const landscapeMQ = window.matchMedia('(max-height: 500px) and (orientation: landscape)');
+  let overlayControls = landscapeMQ.matches;
   const world = {};
 
   function seeded(seed) {
@@ -77,7 +87,7 @@
   }
 
   function layout() {
-    world.groundY = H - Math.max(60, H * 0.13);
+    world.groundY = H - Math.max(overlayControls ? 92 : 60, H * 0.13);
     // Village scene
     world.houseX = W * 0.11;
     world.pondL = W * 0.36;
@@ -105,9 +115,22 @@
     if (!r.width || !r.height) return;
     const oldW = W;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    scale = Math.min(r.height / CFG.baseH, r.width / CFG.minW[mode]);
-    W = r.width / scale;
+    overlayControls = landscapeMQ.matches;
+    followCam = r.width < CFG.phoneMaxWidth;
+    if (followCam) {
+      // Phone held upright: zoom in and let the camera follow the player
+      scale = Math.min(r.height / CFG.phoneBaseH, r.width / CFG.phoneViewW);
+      viewW = r.width / scale;
+      W = Math.max(viewW, CFG.phoneWorldW);
+    } else {
+      // landscape phones are short, so they use the phone height to keep the art big
+      const baseH = overlayControls ? CFG.phoneBaseH : CFG.baseH;
+      scale = Math.min(r.height / baseH, r.width / CFG.minW[mode]);
+      W = r.width / scale;
+      viewW = W;
+    }
     H = r.height / scale;
+    snapCam = true;
     canvas.width = Math.round(r.width * dpr);
     canvas.height = Math.round(r.height * dpr);
     layout();
@@ -184,6 +207,7 @@
     }
     renderPen(true);
     renderHearts();
+    snapCam = true;
   }
 
   function makeTruck(level, arriving = 1.2) {
@@ -433,7 +457,7 @@
       const dirtyChance = Math.min(0.5, 0.16 + S.level * 0.06);
       S.drops.push({
         x: rand(20, W - 20), y: -20,
-        vy: rand(110, 170) + S.level * 22,
+        vy: (rand(110, 170) + S.level * 22) * clamp(H / CFG.baseH, 0.75, 1.4),
         dirty: Math.random() < dirtyChance,
         wob: Math.random() * 6,
       });
@@ -890,12 +914,13 @@
     stops.forEach(([o, c]) => g.addColorStop(o, c));
     return g;
   }
+  let hudSpace = false; // true while drawing on-screen HUD (no mirroring)
   // maxWidth squeezes long words (e.g. German) so they fit on signs
   function label(text, x, y, color, size = 9, weight = 600, align = 'center', maxWidth) {
     ctx.font = `${weight} ${size}px ${fontFor()}`;
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = color;
-    if (!isRTL()) {
+    if (!isRTL() || hudSpace) {
       ctx.textAlign = align;
       if (maxWidth) ctx.fillText(text, x, y, maxWidth);
       else ctx.fillText(text, x, y);
@@ -929,7 +954,8 @@
     const tw = ctx.measureText(text).width;
     const key = !isTouch;
     const w = tw + (key ? 34 : 20), h = 24;
-    x = clamp(x, w / 2 + 4, W - w / 2 - 4); // keep the chip on screen
+    const visL = visibleLeft();
+    x = clamp(x, visL + w / 2 + 4, visL + viewW - w / 2 - 4); // keep the chip on screen
     ctx.fillStyle = 'rgba(15, 17, 20, 0.82)';
     rr(x - w / 2, y - h / 2 + bob, w, h, 7);
     ctx.fill();
@@ -2169,6 +2195,7 @@
     const sx = S.shake > 0 ? rand(-3, 3) : 0;
     const sy = S.shake > 0 ? rand(-2, 2) : 0;
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, sx * dpr * scale, sy * dpr * scale);
+    ctx.translate(-camX, 0);
     if (isRTL()) {
       // Arabic reads right to left, so the village / warehouse starts on the right
       ctx.translate(W, 0);
@@ -2193,14 +2220,115 @@
     });
     ctx.globalAlpha = 1;
 
+    // Everything below is drawn on the screen itself, not in the world
+    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+    hudSpace = true;
     // gentle vignette for a cinematic frame
-    ctx.fillStyle = rad(W / 2, H * 0.45, Math.min(W, H) * 0.35, Math.max(W, H) * 0.8, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(10, 6, 4, 0.35)']]);
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = rad(viewW / 2, H * 0.45, Math.min(viewW, H) * 0.35, Math.max(viewW, H) * 0.8, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(10, 6, 4, 0.35)']]);
+    ctx.fillRect(0, 0, viewW, H);
     // red edge when hurt
     if (S.player.invuln > 1.2) {
       ctx.fillStyle = `rgba(226, 87, 76, ${(S.player.invuln - 1.2) * 0.4})`;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, viewW, H);
     }
+    if (followCam && S.running) {
+      drawGoalArrow();
+      drawMiniMap();
+    }
+    hudSpace = false;
+  }
+
+  // ---------- Phone camera ----------
+  // Where the player is on the (possibly mirrored) world, from the left edge
+  const shownX = (x) => (isRTL() ? W - x : x);
+  // Left edge of the visible slice, in world coordinates
+  function visibleLeft() {
+    return isRTL() ? W - camX - viewW : camX;
+  }
+  function updateCamera(dt) {
+    if (!followCam) { camX = 0; return; }
+    const target = clamp(shownX(S.player.x) - viewW / 2, 0, Math.max(0, W - viewW));
+    camX = snapCam ? target : camX + (target - camX) * Math.min(1, dt * 6);
+    snapCam = false;
+  }
+
+  // The next place the player should go, with its prompt label
+  function currentGoal() {
+    if (S.mode === 'village') {
+      if (S.carry > 0 && !S.purify.active) return { x: world.stationX, key: 'pPurify' };
+      return null;
+    }
+    if (S.stack.some((b) => b)) return { x: world.binX, key: 'pRecycle' };
+    if (S.stack.length) return { x: world.truckBack + 30, key: 'pLoad' };
+    return { x: world.beltEnd, key: 'pGrab' };
+  }
+
+  // An arrow on the screen edge pointing to the goal when it's off screen
+  function drawGoalArrow() {
+    const goal = currentGoal();
+    if (!goal) return;
+    const sxGoal = shownX(goal.x) - camX;
+    if (sxGoal > 24 && sxGoal < viewW - 24) return;
+    const right = sxGoal >= viewW - 24;
+    const text = tr(goal.key);
+    ctx.font = `600 11px ${fontFor()}`;
+    const w = ctx.measureText(text).width + 34;
+    const h = 26;
+    const y = H * 0.38 + Math.sin(S.time * 4) * 2;
+    const x = right ? viewW - w - 8 : 8;
+    ctx.fillStyle = 'rgba(15, 17, 20, 0.82)';
+    rr(x, y - h / 2, w, h, 13);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 201, 7, 0.7)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    // arrow head
+    const ax = right ? x + w - 13 : x + 13;
+    ctx.fillStyle = '#ffc907';
+    ctx.beginPath();
+    ctx.moveTo(ax + (right ? 5 : -5), y);
+    ctx.lineTo(ax + (right ? -3 : 3), y - 6);
+    ctx.lineTo(ax + (right ? -3 : 3), y + 6);
+    ctx.closePath();
+    ctx.fill();
+    label(text, right ? x + 10 : x + 24, y + 4, '#ece8e1', 11, 600, 'left');
+  }
+
+  // A thin strip showing the whole level, the part on screen, and key places
+  function drawMiniMap() {
+    const pad = 14, mw = viewW - pad * 2, my = H - 15, mh = 6;
+    const mapX = (wx) => pad + (shownX(wx) / W) * mw;
+    ctx.fillStyle = 'rgba(15, 17, 20, 0.7)';
+    rr(pad - 6, my - 7, mw + 12, mh + 14, 9);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    rr(pad, my, mw, mh, 3);
+    ctx.fill();
+    const dot = (wx, color, r = 3) => {
+      ctx.fillStyle = color;
+      ellipse(mapX(wx), my + mh / 2, r, r);
+      ctx.fill();
+    };
+    if (S.mode === 'village') {
+      // restricted area as a red stretch
+      const a = mapX(world.signX), b = mapX(W);
+      ctx.fillStyle = 'rgba(226, 87, 76, 0.75)';
+      ctx.fillRect(Math.min(a, b), my, Math.abs(b - a), mh);
+      dot(world.houseX, '#d9a273');
+      dot(world.stationX, '#5bb6f0', 3.5);
+    } else {
+      dot(world.beltEnd, '#c79a62');
+      dot(world.binX, '#6fbf73', 3.5);
+      dot(S.lift.x, '#ff9f1a');
+      dot(world.truckBack + 40, '#ece8e1', 3.5);
+    }
+    // the part of the world on screen
+    const l = pad + (camX / W) * mw, rw = (viewW / W) * mw;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 1;
+    rr(l, my - 3, rw, mh + 6, 3);
+    ctx.stroke();
+    dot(S.player.x, '#ffc907', 3.5);
   }
 
   // ---------- Main loop ----------
@@ -2210,6 +2338,7 @@
     last = now;
     if (S.running && !S.paused && !S.over) update(dt);
     else S.time += dt * 0.3; // keep the scene gently moving behind menus
+    updateCamera(dt);
     render();
     syncUI();
     requestAnimationFrame(loop);
@@ -2245,6 +2374,7 @@
 
   // ---------- Boot ----------
   window.addEventListener('resize', resize);
+  landscapeMQ.addEventListener('change', resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(stage);
   resize();
   newGame('village');

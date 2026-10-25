@@ -36,6 +36,11 @@ Open `index.html` in any web browser. No installs or build steps are needed.
 | Pause | P or Esc | Menu (☰) |
 | Restart | — | Reset button in the header |
 
+## On phones
+
+- **Held upright:** the camera zooms in and follows your character through the full-size level. A mini-map along the bottom shows the whole level and what's on screen, and a gold arrow on the screen edge points to your next goal when it's off screen.
+- **Turned sideways:** the game fills the screen under one slim header row, and the buttons float over the game (← → on the left, ↑ and the hand on the right).
+
 ## Languages
 
 Use the globe menu in the header to pick one of 18 languages:
