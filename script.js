@@ -54,7 +54,7 @@
   // ---------- DOM ----------
   const $ = (id) => document.getElementById(id);
   const canvas = $('game');
-  const ctx = canvas.getContext('2d');
+  let ctx = canvas.getContext('2d');
   const stage = $('stage');
   const ui = {
     waterFill: $('waterFill'), waterText: $('waterText'), bar: document.querySelector('.bar'), barLabel: $('barLabel'),
@@ -114,7 +114,8 @@
     const r = stage.getBoundingClientRect();
     if (!r.width || !r.height) return;
     const oldW = W;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Phones have very sharp screens; 1.5x looks the same and draws far fewer pixels
+    dpr = Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2);
     overlayControls = landscapeMQ.matches;
     followCam = r.width < CFG.phoneMaxWidth;
     if (followCam) {
@@ -914,6 +915,29 @@
     stops.forEach(([o, c]) => g.addColorStop(o, c));
     return g;
   }
+  // The sky, hills and warehouse walls never move, so they're drawn once into
+  // offscreen canvases and copied each frame instead of redrawing every gradient.
+  const bgCache = { key: '', layers: [] };
+  function cachedLayer(i, draw) {
+    const key = [S.mode, W, H, world.groundY, scale, dpr, I18N.lang].join('|');
+    if (bgCache.key !== key) { bgCache.key = key; bgCache.layers = []; }
+    let layer = bgCache.layers[i];
+    if (!layer) {
+      layer = document.createElement('canvas');
+      layer.width = Math.ceil(W * scale * dpr);
+      layer.height = Math.ceil(H * scale * dpr);
+      const main = ctx;
+      ctx = layer.getContext('2d');
+      ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+      draw();
+      ctx = main;
+      bgCache.layers[i] = layer;
+    }
+    ctx.drawImage(layer, 0, 0, W, H);
+  }
+  // Redraw the cached signs once the web fonts arrive
+  if (document.fonts) document.fonts.ready.then(() => { bgCache.key = ''; });
+
   let hudSpace = false; // true while drawing on-screen HUD (no mirroring)
   // maxWidth squeezes long words (e.g. German) so they fit on signs
   function label(text, x, y, color, size = 9, weight = 600, align = 'center', maxWidth) {
@@ -1185,18 +1209,20 @@
   // ---------- Village art ----------
   function drawVillage() {
     const gy = world.groundY;
+    const sx = W * 0.74, sy = gy - Math.min(130, gy * 0.42); // sun, also reflected in the pond
 
-    // Sky at golden hour
-    ctx.fillStyle = lin(0, 0, 0, gy, [[0, '#1d3350'], [0.4, '#4b5c78'], [0.72, '#c58466'], [1, '#f1c08a']]);
-    ctx.fillRect(0, 0, W, gy);
+    cachedLayer(0, () => {
+      // Sky at golden hour
+      ctx.fillStyle = lin(0, 0, 0, gy, [[0, '#1d3350'], [0.4, '#4b5c78'], [0.72, '#c58466'], [1, '#f1c08a']]);
+      ctx.fillRect(0, 0, W, gy);
 
-    // Sun + haze
-    const sx = W * 0.74, sy = gy - Math.min(130, gy * 0.42);
-    ctx.fillStyle = rad(sx, sy, 10, Math.max(W, gy) * 0.45, [[0, 'rgba(255, 214, 160, 0.55)'], [0.25, 'rgba(255, 190, 140, 0.18)'], [1, 'rgba(255, 190, 140, 0)']]);
-    ctx.fillRect(0, 0, W, gy);
-    ellipse(sx, sy, 22, 22);
-    ctx.fillStyle = '#ffe7c2';
-    ctx.fill();
+      // Sun + haze
+      ctx.fillStyle = rad(sx, sy, 10, Math.max(W, gy) * 0.45, [[0, 'rgba(255, 214, 160, 0.55)'], [0.25, 'rgba(255, 190, 140, 0.18)'], [1, 'rgba(255, 190, 140, 0)']]);
+      ctx.fillRect(0, 0, W, gy);
+      ellipse(sx, sy, 22, 22);
+      ctx.fillStyle = '#ffe7c2';
+      ctx.fill();
+    });
 
     // Long thin clouds
     S.clouds.forEach((c) => {
@@ -1222,21 +1248,23 @@
       ctx.stroke();
     }
 
-    // Layered land with atmospheric depth
-    ridge(gy, gy * 0.42, 1.3, 'rgba(176, 124, 112, 0.85)', 0.5);
-    ridge(gy, gy * 0.3, 4.1, '#8b6260', 1);
-    [0.2, 0.42, 0.86].forEach((fx, i) => acacia(W * fx, gy - gy * 0.12 - i * 3, 0.55, '#5a403f'));
-    for (let i = 0; i < 4; i++) distantHut(W * (0.58 + i * 0.035), gy - gy * 0.115);
-    ridge(gy, gy * 0.16, 7.7, '#6a4a45', 1.4);
+    cachedLayer(1, () => {
+      // Layered land with atmospheric depth
+      ridge(gy, gy * 0.42, 1.3, 'rgba(176, 124, 112, 0.85)', 0.5);
+      ridge(gy, gy * 0.3, 4.1, '#8b6260', 1);
+      [0.2, 0.42, 0.86].forEach((fx, i) => acacia(W * fx, gy - gy * 0.12 - i * 3, 0.55, '#5a403f'));
+      for (let i = 0; i < 4; i++) distantHut(W * (0.58 + i * 0.035), gy - gy * 0.115);
+      ridge(gy, gy * 0.16, 7.7, '#6a4a45', 1.4);
 
-    // Ground
-    ctx.fillStyle = lin(0, gy, 0, H, [[0, '#b88a55'], [1, '#7c5733']]);
-    ctx.fillRect(0, gy, W, H - gy);
-    ctx.fillStyle = 'rgba(255, 220, 170, 0.25)';
-    ctx.fillRect(0, gy, W, 2);
-    world.speck.forEach((s) => {
-      ctx.fillStyle = `rgba(70, 45, 25, ${0.12 + s.a * 0.12})`;
-      ctx.fillRect(s.x, gy + 6 + s.y * (H - gy - 8), s.w, 1.5);
+      // Ground
+      ctx.fillStyle = lin(0, gy, 0, H, [[0, '#b88a55'], [1, '#7c5733']]);
+      ctx.fillRect(0, gy, W, H - gy);
+      ctx.fillStyle = 'rgba(255, 220, 170, 0.25)';
+      ctx.fillRect(0, gy, W, 2);
+      world.speck.forEach((s) => {
+        ctx.fillStyle = `rgba(70, 45, 25, ${0.12 + s.a * 0.12})`;
+        ctx.fillRect(s.x, gy + 6 + s.y * (H - gy - 8), s.w, 1.5);
+      });
     });
 
     // Pond under the bridge
@@ -1673,102 +1701,106 @@
   function drawWarehouse() {
     const gy = world.groundY;
 
-    // Back wall
-    ctx.fillStyle = lin(0, 0, 0, gy, [[0, '#2b2f35'], [1, '#41464d']]);
-    ctx.fillRect(0, 0, W, gy);
-    for (let x = 0; x < W; x += 64) {
-      ctx.fillStyle = 'rgba(0,0,0,0.22)';
-      ctx.fillRect(x, 0, 1, gy);
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      ctx.fillRect(x + 1, 0, 1, gy);
-    }
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect(0, gy - 26, W, 26);
+    cachedLayer(0, () => {
+      // Back wall
+      ctx.fillStyle = lin(0, 0, 0, gy, [[0, '#2b2f35'], [1, '#41464d']]);
+      ctx.fillRect(0, 0, W, gy);
+      for (let x = 0; x < W; x += 64) {
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.fillRect(x, 0, 1, gy);
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(x + 1, 0, 1, gy);
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.fillRect(0, gy - 26, W, 26);
 
-    // High windows with evening light
-    const winY = 26, winH = 34;
-    const winXs = [];
-    for (let x = 30; x < world.truckBack - 70; x += 120) winXs.push(x);
-    winXs.forEach((x) => {
-      ctx.fillStyle = lin(0, winY, 0, winY + winH, [[0, '#3c5574'], [1, '#d9a27a']]);
-      ctx.fillRect(x, winY, 70, winH);
-      ctx.fillStyle = '#23272c';
-      for (let i = 1; i < 4; i++) ctx.fillRect(x + i * 17.5, winY, 1.5, winH);
-      ctx.fillRect(x, winY + winH / 2, 70, 1.5);
-    });
-    // Steel truss
-    ctx.fillStyle = '#1d2024';
-    ctx.fillRect(0, 12, W, 6);
-    ctx.fillStyle = '#3a3f46';
-    ctx.fillRect(0, 12, W, 1);
-    ctx.strokeStyle = '#1d2024';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = 0; x < W; x += 40) { ctx.moveTo(x, 18); ctx.lineTo(x + 20, 0); ctx.lineTo(x + 40, 18); }
-    ctx.stroke();
-
-    // Stenciled wall sign
-    label(tr('cDepot'), W * 0.42, gy * 0.42, 'rgba(236, 232, 225, 0.16)', Math.min(26, W * 0.035), 800);
-
-    // Pallet racking with shrink-wrapped water
-    rack(W * 0.05, gy, Math.min(170, W * 0.26));
-    if (W > 680) rack(W * 0.52, gy, Math.min(140, W * 0.14));
-
-    // Loading door with the evening outside
-    const doorX = world.truckBack - 16;
-    ctx.fillStyle = lin(0, 70, 0, gy, [[0, '#33496a'], [0.7, '#c68a64'], [1, '#e7b483']]);
-    ctx.fillRect(doorX, 70, W - doorX, gy - 70);
-    ctx.fillStyle = '#4e3a33';
-    ctx.fillRect(doorX, gy - 16, W - doorX, 16);
-    ctx.fillStyle = '#1d2024';
-    ctx.fillRect(doorX - 8, 62, W - doorX + 8, 10);
-    ctx.fillRect(doorX - 8, 62, 8, gy - 62);
-    ctx.fillStyle = '#5b6168';
-    for (let i = 0; i < 3; i++) ctx.fillRect(doorX, 72 + i * 4, W - doorX, 2.5);
-
-    // Light shafts from the windows, with dust
-    ctx.fillStyle = 'rgba(255, 214, 170, 0.05)';
-    winXs.forEach((x) => {
+      // High windows with evening light
+      const winY = 26, winH = 34;
+      const winXs = [];
+      for (let x = 30; x < world.truckBack - 70; x += 120) winXs.push(x);
+      winXs.forEach((x) => {
+        ctx.fillStyle = lin(0, winY, 0, winY + winH, [[0, '#3c5574'], [1, '#d9a27a']]);
+        ctx.fillRect(x, winY, 70, winH);
+        ctx.fillStyle = '#23272c';
+        for (let i = 1; i < 4; i++) ctx.fillRect(x + i * 17.5, winY, 1.5, winH);
+        ctx.fillRect(x, winY + winH / 2, 70, 1.5);
+      });
+      // Steel truss
+      ctx.fillStyle = '#1d2024';
+      ctx.fillRect(0, 12, W, 6);
+      ctx.fillStyle = '#3a3f46';
+      ctx.fillRect(0, 12, W, 1);
+      ctx.strokeStyle = '#1d2024';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x, winY + winH);
-      ctx.lineTo(x + 70, winY + winH);
-      ctx.lineTo(x + 70 + gy * 0.5, gy);
-      ctx.lineTo(x + gy * 0.5, gy);
-      ctx.closePath();
-      ctx.fill();
+      for (let x = 0; x < W; x += 40) { ctx.moveTo(x, 18); ctx.lineTo(x + 20, 0); ctx.lineTo(x + 40, 18); }
+      ctx.stroke();
+
+      // Stenciled wall sign
+      label(tr('cDepot'), W * 0.42, gy * 0.42, 'rgba(236, 232, 225, 0.16)', Math.min(26, W * 0.035), 800);
+
+      // Pallet racking with shrink-wrapped water
+      rack(W * 0.05, gy, Math.min(170, W * 0.26));
+      if (W > 680) rack(W * 0.52, gy, Math.min(140, W * 0.14));
+
+      // Loading door with the evening outside
+      const doorX = world.truckBack - 16;
+      ctx.fillStyle = lin(0, 70, 0, gy, [[0, '#33496a'], [0.7, '#c68a64'], [1, '#e7b483']]);
+      ctx.fillRect(doorX, 70, W - doorX, gy - 70);
+      ctx.fillStyle = '#4e3a33';
+      ctx.fillRect(doorX, gy - 16, W - doorX, 16);
+      ctx.fillStyle = '#1d2024';
+      ctx.fillRect(doorX - 8, 62, W - doorX + 8, 10);
+      ctx.fillRect(doorX - 8, 62, 8, gy - 62);
+      ctx.fillStyle = '#5b6168';
+      for (let i = 0; i < 3; i++) ctx.fillRect(doorX, 72 + i * 4, W - doorX, 2.5);
+
+      // Light shafts from the windows, with dust
+      ctx.fillStyle = 'rgba(255, 214, 170, 0.05)';
+      winXs.forEach((x) => {
+        ctx.beginPath();
+        ctx.moveTo(x, winY + winH);
+        ctx.lineTo(x + 70, winY + winH);
+        ctx.lineTo(x + 70 + gy * 0.5, gy);
+        ctx.lineTo(x + gy * 0.5, gy);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // Polished concrete floor
+      ctx.fillStyle = lin(0, gy, 0, H, [[0, '#6b7178'], [1, '#43484e']]);
+      ctx.fillRect(0, gy, W, H - gy);
+      winXs.forEach((x) => {
+        ctx.fillStyle = 'rgba(255, 220, 180, 0.07)';
+        ctx.fillRect(x + gy * 0.5, gy + 2, 70, H - gy);
+      });
+      ctx.fillStyle = '#c9a227';
+      ctx.fillRect(0, gy + 6, W, 2.5);
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      for (let x = 40; x < W; x += 110) ctx.fillRect(x, gy + 12, 1, H - gy);
+      // hatched zone at the truck
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(world.truckBack - 60, gy + 10, 60, H - gy);
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(201, 162, 39, 0.5)';
+      ctx.lineWidth = 3;
+      for (let i = -80; i < 100; i += 12) {
+        ctx.beginPath();
+        ctx.moveTo(world.truckBack - 60 + i, gy + 10);
+        ctx.lineTo(world.truckBack - 60 + i + 30, H);
+        ctx.stroke();
+      }
+      ctx.restore();
     });
+
+    // Dust drifting through the light
     world.motes.forEach((m) => {
       const x = (m.x * W + Math.sin(S.time * 0.3 + m.p) * 20) % W;
       const y = (m.y * gy + S.time * m.v) % gy;
       ctx.fillStyle = `rgba(255, 230, 200, ${0.15 + Math.sin(S.time + m.p) * 0.1})`;
       ctx.fillRect(x, y, m.s, m.s);
     });
-
-    // Polished concrete floor
-    ctx.fillStyle = lin(0, gy, 0, H, [[0, '#6b7178'], [1, '#43484e']]);
-    ctx.fillRect(0, gy, W, H - gy);
-    winXs.forEach((x) => {
-      ctx.fillStyle = 'rgba(255, 220, 180, 0.07)';
-      ctx.fillRect(x + gy * 0.5, gy + 2, 70, H - gy);
-    });
-    ctx.fillStyle = '#c9a227';
-    ctx.fillRect(0, gy + 6, W, 2.5);
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    for (let x = 40; x < W; x += 110) ctx.fillRect(x, gy + 12, 1, H - gy);
-    // hatched zone at the truck
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(world.truckBack - 60, gy + 10, 60, H - gy);
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(201, 162, 39, 0.5)';
-    ctx.lineWidth = 3;
-    for (let i = -80; i < 100; i += 12) {
-      ctx.beginPath();
-      ctx.moveTo(world.truckBack - 60 + i, gy + 10);
-      ctx.lineTo(world.truckBack - 60 + i + 30, H);
-      ctx.stroke();
-    }
-    ctx.restore();
 
     S.spills.forEach(spill);
     recyclingBin(world.binX, gy);
@@ -2327,9 +2359,12 @@
   // ---------- Main loop ----------
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.033, (now - last) / 1000);
+    const playing = S.running && !S.paused && !S.over;
+    // Behind menus the scene only drifts, so ~20fps is plenty and saves battery
+    if (!playing && now - last < 50) { requestAnimationFrame(loop); return; }
+    const dt = Math.min(playing ? 0.033 : 0.06, (now - last) / 1000);
     last = now;
-    if (S.running && !S.paused && !S.over) update(dt);
+    if (playing) update(dt);
     else S.time += dt * 0.3; // keep the scene gently moving behind menus
     updateCamera(dt);
     render();

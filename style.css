@@ -30,9 +30,13 @@ html, body {
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  /* Quick double taps on buttons shouldn't zoom the page; pinch-zoom still works */
+  touch-action: manipulation;
 }
 
-button { font: inherit; color: inherit; }
+button { font: inherit; color: inherit; touch-action: manipulation; }
+/* No text selection or long-press callout when mashing buttons */
+button, .touchbar, .dpad, .topbar, .card { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 svg { fill: currentColor; }
 
 .app {

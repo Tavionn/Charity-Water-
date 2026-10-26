@@ -40,12 +40,16 @@ Open `index.html` in any web browser. No installs or build steps are needed.
 
 - **Held upright:** the camera zooms in and follows your character through the full-size level. A mini-map along the bottom shows the whole level and what's on screen, and a gold arrow on the screen edge points to your next goal when it's off screen.
 - **Turned sideways:** the game fills the screen under one slim header row, and the buttons float over the game (← → on the left, ↑ and the hand on the right).
+- **No accidental zoom:** tapping the buttons quickly won't zoom the page. Pinch-to-zoom still works for anyone who needs it.
+- **Fast on phones:** fonts load in the background, the scenery that never moves is drawn once and reused, the canvas uses a lighter resolution on touch screens, and the scene redraws more slowly behind menus to save battery.
 
 ## Languages
 
-Use the globe menu in the header to pick one of 18 languages:
+Use the globe menu in the header to pick one of 29 languages:
 
-English · Español · Français · Português · Deutsch · Italiano · Kiswahili · Türkçe · Bahasa Indonesia · Русский · हिन्दी · 中文 · 日本語 · 한국어 · **العربية · עברית · فارسی · اردو**
+English · Español · Français · Português · Deutsch · Italiano · Nederlands · Polski · Kiswahili · Hausa · Yorùbá · አማርኛ · Türkçe · Bahasa Indonesia · Filipino · Tiếng Việt · Русский · Українська · हिन्दी · বাংলা · नेपाली · ไทย · 中文 · 日本語 · 한국어 · **العربية · עברית · فارسی · اردو**
+
+Amharic, Bengali, Hausa, Yoruba, and Nepali are spoken in countries where charity: water funds projects, such as Ethiopia, Bangladesh, Nigeria, and Nepal.
 
 The game adapts to how each language is read:
 

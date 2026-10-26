@@ -24,11 +24,22 @@
     { code: 'pt', name: 'Português' },
     { code: 'de', name: 'Deutsch' },
     { code: 'it', name: 'Italiano' },
+    { code: 'nl', name: 'Nederlands' },
+    { code: 'pl', name: 'Polski' },
     { code: 'sw', name: 'Kiswahili' },
+    { code: 'ha', name: 'Hausa' },
+    { code: 'yo', name: 'Yorùbá' },
+    { code: 'am', name: 'አማርኛ' },
     { code: 'tr', name: 'Türkçe' },
     { code: 'id', name: 'Bahasa Indonesia' },
+    { code: 'fil', name: 'Filipino' },
+    { code: 'vi', name: 'Tiếng Việt' },
     { code: 'ru', name: 'Русский' },
+    { code: 'uk', name: 'Українська' },
     { code: 'hi', name: 'हिन्दी' },
+    { code: 'bn', name: 'বাংলা' },
+    { code: 'ne', name: 'नेपाली' },
+    { code: 'th', name: 'ไทย' },
     { code: 'zh', name: '中文（简体）' },
     { code: 'ja', name: '日本語' },
     { code: 'ko', name: '한국어' },
@@ -260,7 +271,8 @@
     } catch (_) { /* storage unavailable */ }
     const wanted = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
     for (const tag of wanted) {
-      const base = String(tag).split('-')[0].toLowerCase();
+      let base = String(tag).split('-')[0].toLowerCase();
+      if (base === 'tl') base = 'fil'; // Tagalog browsers → Filipino
       if (supported(base)) return base;
     }
     return 'en';
