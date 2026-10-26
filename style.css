@@ -72,22 +72,25 @@ svg { fill: currentColor; }
 }
 .tagline { margin: 2px 0 0; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.2px; }
 
+/* Official charity: water logo, dark version from the brand guide:
+   white lettering + yellow jerry can on a dark background, in a yellow frame.
+   Never stretch it, squish it, or make the jerry can bigger. */
 .charity {
   grid-area: charity;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--yellow);
-  color: #16130a;
+  padding: 7px 12px;
+  border: 2px solid var(--yellow);
+  border-radius: 2px;
+  background: transparent; /* blends into the dark header */
+  color: #fff;              /* lettering color */
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.82rem;
-  white-space: nowrap;
+  direction: ltr;          /* the logo reads the same in every language */
+  transition: box-shadow 0.15s;
 }
-.charity svg { width: 14px; height: 14px; }
-.charity:hover { background: var(--yellow-soft); }
+.charity:hover, .charity:focus-visible { box-shadow: 0 0 0 3px rgba(255, 201, 7, 0.3); outline: none; }
+.cw-logo { display: block; height: 18px; width: auto; aspect-ratio: 615.38 / 77.53; }
+.cw-mark-only { display: none; height: 17px; width: auto; }
 
 .reset-btn {
   grid-area: reset;
@@ -134,6 +137,7 @@ svg { fill: currentColor; }
 .stat b { font-family: var(--head); font-weight: 600; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 .stat.water { flex: 1 1 280px; max-width: 480px; }
 .stat-icon { width: 20px; height: 20px; color: var(--yellow); flex: none; }
+.stat-icon.can { width: auto; height: 21px; }
 .stat-icon.sm { width: 22px; height: 18px; color: var(--sand); }
 
 .bar {
@@ -329,6 +333,8 @@ body.touch .keys-touch { display: block; }
 .role:hover, .role:focus-visible { border-color: var(--faint); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3); outline: none; }
 .role-top { display: flex; align-items: center; gap: 12px; }
 .role-ico { width: 40px; height: 40px; padding: 8px; border-radius: 10px; background: var(--surface-3); color: #f2c48d; flex: none; }
+.role-ico.can { display: grid; place-items: center; padding: 0; }
+.role-ico.can img { height: 26px; width: auto; }
 .role.warehouse .role-ico { color: #8fd0f5; }
 .role-name { display: block; font-family: var(--head); font-weight: 700; font-size: 1.2rem; }
 .role-sub { display: block; font-size: 0.78rem; color: var(--muted); }
@@ -467,7 +473,8 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
   }
   .brand h1 { font-size: 1.25rem; }
   .tagline { display: none; }
-  .charity { justify-self: start; padding: 3px 10px; font-size: 0.72rem; }
+  .charity { justify-self: start; padding: 5px 9px; }
+  .cw-logo { height: 14px; }
   .menu-btn { align-self: start; }
   .reset-btn { align-self: start; padding: 0 10px; }
   .lang { align-self: start; }
@@ -569,13 +576,15 @@ kbd, .bar-label b, .stat b, .can-label b { unicode-bidi: isolate; direction: ltr
 
   /* one slim header row */
   .topbar {
-    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
-    grid-template-areas: "brand stats lang reset menu";
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas: "brand charity stats lang reset menu";
     gap: 10px;
     padding: 6px max(12px, env(safe-area-inset-right)) 6px max(12px, env(safe-area-inset-left));
   }
   .brand h1 { font-size: 1.05rem; white-space: nowrap; }
-  .tagline, .charity, .herd-mini { display: none; }
+  .tagline, .herd-mini, .cw-logo, .stat-icon.can { display: none; }
+  .cw-mark-only { display: block; }
+  .charity { padding: 6px 9px; }
   .stats { flex-wrap: nowrap; gap: 12px; min-width: 0; }
   .stat.water { flex: 1 1 auto; min-width: 120px; max-width: 360px; }
   .level-mini { display: flex; }
