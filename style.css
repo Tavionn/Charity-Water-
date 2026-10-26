@@ -186,6 +186,16 @@ svg { fill: currentColor; }
 /* ===== Stage ===== */
 .stage { position: relative; flex: 1 1 auto; min-height: 260px; background: #2c4a6b; overflow: hidden; }
 #game { display: block; width: 100%; height: 100%; touch-action: none; }
+/* charity: water's signature gold frame, with a thin dark mat like their framed photos */
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--frame, 4px) solid var(--yellow);
+  box-shadow: inset 0 0 0 var(--mat, 3px) rgba(10, 11, 13, 0.85);
+  pointer-events: none;
+  z-index: 7; /* stays crisp above menus and confetti */
+}
 
 .toast {
   position: absolute;
@@ -334,7 +344,7 @@ body.touch .keys-touch { display: block; }
   background: linear-gradient(90deg, #d98c5f, #f2c48d);
 }
 .role.warehouse::before { background: linear-gradient(90deg, #4aa8e8, #8fd0f5); }
-.role:hover, .role:focus-visible { border-color: var(--faint); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3); outline: none; }
+.role:hover, .role:focus-visible { border-color: var(--yellow); transform: translateY(-2px); box-shadow: 0 0 0 2px var(--yellow), 0 12px 30px rgba(0, 0, 0, 0.3); outline: none; }
 .role-top { display: flex; align-items: center; gap: 12px; }
 .role-ico { width: 40px; height: 40px; padding: 8px; border-radius: 10px; background: var(--surface-3); color: #f2c48d; flex: none; }
 .role-ico.can { display: grid; place-items: center; padding: 0; }
@@ -466,6 +476,7 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
 
 /* ===== Mobile / narrow screens ===== */
 @media (max-width: 760px) {
+  .stage { --frame: 3px; --mat: 2px; }
   .topbar {
     grid-template-columns: 1fr auto auto auto;
     grid-template-areas:
@@ -604,7 +615,7 @@ kbd, .bar-label b, .stat b, .can-label b { unicode-bidi: isolate; direction: ltr
   .lang select { padding-inline: 30px 8px; font-size: 0.78rem; }
 
   /* the game fills everything under the header */
-  .stage { min-height: 0; }
+  .stage { min-height: 0; --frame: 3px; --mat: 2px; }
   .panel {
     position: absolute;
     inset: auto 0 0 0;
