@@ -478,7 +478,8 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
 @media (max-width: 760px) {
   .stage { --frame: 3px; --mat: 2px; }
   .topbar {
-    grid-template-columns: 1fr auto auto auto;
+    /* the language picker takes whatever room is left so the row never spills off-screen */
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     grid-template-areas:
       "brand lang reset menu"
       "charity lang reset menu"
@@ -492,8 +493,9 @@ body[data-mode="warehouse"] .steps[data-mode="warehouse"] { display: flex; }
   .cw-logo { height: 14px; }
   .menu-btn { align-self: start; }
   .reset-btn { align-self: start; padding: 0 10px; }
-  .lang { align-self: start; }
-  .stats { gap: 8px 14px; }
+  .lang { align-self: start; justify-self: end; width: 100%; max-width: 190px; min-width: 0; }
+  .lang select { width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats { gap: 8px 14px; min-width: 0; }
   .stat.water { flex: 1 1 100%; max-width: none; }
   .level-mini, .herd-mini { display: flex; }
   .hearts { margin-inline-start: auto; }
@@ -580,8 +582,10 @@ html:not([lang="en"]) :is(.stat .k, .bar-label, .panel h2, .herd-head, .caption,
 kbd, .bar-label b, .stat b, .can-label b { unicode-bidi: isolate; direction: ltr; }
 
 @media (max-width: 420px) {
+  .topbar { gap: 6px 8px; padding-inline: 12px; }
   .reset-btn span { display: none; }
   .lang select { padding-inline: 30px 8px; }
+  .stats { gap: 8px 12px; }
 }
 
 /* ===== Landscape phones: full-screen game, buttons float on top =====
